@@ -1,7 +1,7 @@
 import express from "express";
-import * as brandController from "../controllers/brandController";
-import { verifyToken, isAdmin } from "../middleware/auth";
-import * as brandValidate from "../validates/brandValidate";
+import * as brandController from "../controllers/brand.controller";
+import { verifyToken, isAdmin } from "../middleware/auth.middleware";
+import * as brandValidate from "../validates/brand.validate";
 
 const router = express.Router();
 

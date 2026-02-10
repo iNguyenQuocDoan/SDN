@@ -1,6 +1,6 @@
 import express from "express";
-import authRoutes from "./authRoute";
-import brandRoutes from "./brandRoute";
+import authRoutes from "./auth.route";
+import brandRoutes from "./brand.route";
 
 const router = express.Router();
 

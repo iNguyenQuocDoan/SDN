@@ -1,9 +1,9 @@
-import Brand from "../models/Brand";
+import Brand from "../models/brand.model";
 import { HTTP_STATUS } from "../constants/httpStatus";
 import { BRAND_MESSAGES } from "../constants/messages";
 
 const getAll = async () => {
-  const brands = await Brand.find({});
+  const brands = await Brand.find({}).sort({ createdAt: -1 });
   return {
     status: HTTP_STATUS.OK,
     data: brands,

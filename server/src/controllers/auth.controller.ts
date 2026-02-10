@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 
 import { HTTP_STATUS } from "../constants/httpStatus";
-import * as authService from "../services/authService";
+import * as authService from "../services/auth.service";
 
 const register = async (req: Request, res: Response) => {
   try {

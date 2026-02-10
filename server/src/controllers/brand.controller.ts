@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { HTTP_STATUS } from "../constants/httpStatus";
-import * as brandService from "../services/brandService";
+import * as brandService from "../services/brand.service";
 import { AUTH_MESSAGES } from "../constants/messages";
 
 const getAll = async (req: Request, res: Response) => {

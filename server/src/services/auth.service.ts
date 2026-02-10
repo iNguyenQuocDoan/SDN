@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import { HTTP_STATUS } from "../constants/httpStatus";
 import { AUTH_MESSAGES } from "../constants/messages";
 
-import Member from "../models/Member";
+import Member from "../models/member.model";
 
 const registerMember = async (data: {
   email: string;

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import Member from "../models/Member";
+import Member from "../models/member.model";
 import { HTTP_STATUS } from "../constants/httpStatus";
 import { AUTH_MESSAGES } from "../constants/messages";
 

@@ -36,4 +36,10 @@ const registerValidate = [
   handleValidationErrors,
 ] as any[];
 
-export { registerValidate };
+const loginValidate = [
+  body("email").isEmail().withMessage("Email is invalid"),
+  body("password").notEmpty().withMessage("Password is required"),
+  handleValidationErrors,
+] as any[];
+
+export { registerValidate, loginValidate };

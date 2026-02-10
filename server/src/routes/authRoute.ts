@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import * as authController from "../controllers/authController";
 import * as authValidate from "../validates/authValidate";
 
@@ -9,6 +9,12 @@ router.post(
   authValidate.registerValidate,
   authController.register,
 );
-// router.post("/login");
+
+// prettier-ignore
+router.post(
+    "/login",
+    authValidate.loginValidate,
+    authController.login,
+);
 
 export default router;

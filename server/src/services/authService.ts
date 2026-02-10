@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { HTTP_STATUS } from "../constants/httpStatus";
@@ -15,7 +14,7 @@ const registerMember = async (data: {
 }) => {
   const emailExists = await Member.findOne({ email: data.email });
   if (emailExists) {
-    return {
+    throw {
       status: HTTP_STATUS.BAD_REQUEST,
       message: AUTH_MESSAGES.EMAIL_EXISTS,
     };
@@ -39,4 +38,43 @@ const registerMember = async (data: {
   };
 };
 
-export { registerMember };
+const loginMember = async (data: { email: string; password: string }) => {
+  const record = await Member.findOne({ email: data.email });
+  if (!record) {
+    throw {
+      status: HTTP_STATUS.UNAUTHORIZED,
+      message: AUTH_MESSAGES.INVALID_CREDENTIALS,
+    };
+  }
+
+  const recordExist = await bcrypt.compare(data.password, record.password);
+  if (!recordExist) {
+    throw {
+      status: HTTP_STATUS.UNAUTHORIZED,
+      message: AUTH_MESSAGES.INVALID_CREDENTIALS,
+    };
+  }
+
+  const token = jwt.sign(
+    {
+      id: record._id,
+      email: record.email,
+    },
+    process.env.JWT_SECRET as string,
+    { expiresIn: "1d" },
+  );
+
+  return {
+    status: HTTP_STATUS.OK,
+    token,
+    record: {
+      id: record._id,
+      email: record.email,
+      name: record.name,
+      YOB: record.YOB,
+      gender: record.gender,
+    },
+  };
+};
+
+export { registerMember, loginMember };

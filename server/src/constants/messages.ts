@@ -6,6 +6,7 @@ export const AUTH_MESSAGES = {
   INVALID_TOKEN: "Invalid token",
   USER_NOT_FOUND: "User not found",
   ADMIN_REQUIRED: "Admin access required",
+  INTERNAL_ERROR: "Internal server error",
 } as const;
 
 export const USER_MESSAGES = {
@@ -26,6 +27,7 @@ export const BRAND_MESSAGES = {
   CREATED: "Brand created successfully",
   UPDATED: "Brand updated successfully",
   DELETED: "Brand deleted successfully",
+  INTERNAL_ERROR: "Internal server error",
 } as const;
 
 export const COMMENT_MESSAGES = {

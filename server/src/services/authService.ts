@@ -10,7 +10,7 @@ const registerMember = async (data: {
   password: string;
   name: string;
   YOB: number;
-  gender: boolean;
+  gender: string;
 }) => {
   const emailExists = await Member.findOne({ email: data.email });
   if (emailExists) {

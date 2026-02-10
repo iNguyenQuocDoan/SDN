@@ -37,7 +37,7 @@ const commentSchema = new mongoose.Schema(
       required: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const perfumeSchema = new mongoose.Schema(
@@ -81,7 +81,7 @@ const perfumeSchema = new mongoose.Schema(
     },
     comments: [commentSchema],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model<IPerfume>("Perfume", perfumeSchema);

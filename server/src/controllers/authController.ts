@@ -7,8 +7,11 @@ const register = async (req: Request, res: Response) => {
   try {
     const record = await authService.registerMember(req.body);
     res.status(record.status).json(record);
-  } catch (err) {
+  } catch (err: any) {
     console.log(err);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      message: err.message,
+    });
   }
 };
 

@@ -19,13 +19,6 @@ app.get("/", (_req, res) => {
 
 app.use("/", routes);
 
-// Routes (se them sau)
-// app.use("/auth", authRoutes);
-// app.use("/brands", brandRoutes);
-// app.use("/perfumes", perfumeRoutes);
-// app.use("/me", memberRoutes);
-// app.use("/collectors", collectorRoutes);
-
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

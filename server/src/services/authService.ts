@@ -29,7 +29,13 @@ const registerMember = async (data: {
   return {
     status: HTTP_STATUS.CREATED,
     message: AUTH_MESSAGES.REGISTER_SUCCESS,
-    data: newRecord,
+    data: {
+      id: newRecord._id,
+      email: newRecord.email,
+      name: newRecord.name,
+      YOB: newRecord.YOB,
+      gender: newRecord.gender,
+    },
   };
 };
 

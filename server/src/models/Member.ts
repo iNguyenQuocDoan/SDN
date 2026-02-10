@@ -1,5 +1,4 @@
 import mongoose, { Document } from "mongoose";
-import bcrypt from "bcrypt";
 
 export interface IMember extends Document {
   email: string;

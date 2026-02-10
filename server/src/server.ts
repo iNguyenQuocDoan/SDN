@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
+import routes from "./routes/index";
 
 dotenv.config();
 
@@ -15,6 +16,8 @@ app.use(express.json());
 app.get("/", (_req, res) => {
   res.json({ message: "Perfume API is running..." });
 });
+
+app.use("/", routes);
 
 // Routes (se them sau)
 // app.use("/auth", authRoutes);

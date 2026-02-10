@@ -6,7 +6,7 @@ export interface IMember extends Document {
   password: string;
   name: string;
   YOB: number;
-  gender: boolean;
+  gender: string;
   isAdmin: boolean;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
@@ -31,7 +31,7 @@ const memberSchema = new mongoose.Schema(
       required: true,
     },
     gender: {
-      type: Boolean,
+      type: String,
       required: true,
     },
     isAdmin: {

@@ -1,19 +1,7 @@
 import { body, validationResult } from "express-validator";
 import { HTTP_STATUS } from "../constants/httpStatus";
 import { Request, Response, NextFunction } from "express";
-
-const handleValidationErrors = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): void => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    res.status(HTTP_STATUS.BAD_REQUEST).json({ errors: errors.array() });
-    return;
-  }
-  next();
-};
+import { handleValidationErrors } from "../utils/handleValidation";
 
 const registerValidate = [
   body("email").isEmail().withMessage("Email is invalid"),
@@ -32,7 +20,7 @@ const registerValidate = [
     ),
   body("name").notEmpty().withMessage("Name is required"),
   body("YOB").isInt().withMessage("YOB must be a number"),
-  body("gender").isString().withMessage("Gender must be a string"),
+  body("gender").isBoolean().withMessage("Gender must be a boolean"),
   handleValidationErrors,
 ] as any[];
 

@@ -13,6 +13,7 @@ export const USER_MESSAGES = {
   UPDATE_SUCCESS: "Profile updated successfully",
   PASSWORD_CHANGED: "Password changed successfully",
   WRONG_PASSWORD: "Current password is incorrect",
+  NOT_FOUND: "User not found",
 } as const;
 
 export const PERFUME_MESSAGES = {

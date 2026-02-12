@@ -8,10 +8,14 @@ const register = async (req: Request, res: Response) => {
   try {
     const record = await authService.registerMember(req.body);
     res.status(record.status).json(record);
-  } catch (err: any) {
-    res.status(err.status || HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      message: err.message,
-    });
+  } catch (error: any) {
+    if (error.status) {
+      res.status(error.status).json({ message: error.message });
+    } else {
+      res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json({ message: AUTH_MESSAGES.INTERNAL_ERROR });
+    }
   }
 };
 
@@ -29,9 +33,13 @@ const login = async (req: Request, res: Response) => {
 
     res.status(HTTP_STATUS.OK).json(result);
   } catch (error: any) {
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      message: error.message,
-    });
+    if (error.status) {
+      res.status(error.status).json({ message: error.message });
+    } else {
+      res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json({ message: AUTH_MESSAGES.INTERNAL_ERROR });
+    }
   }
 };
 

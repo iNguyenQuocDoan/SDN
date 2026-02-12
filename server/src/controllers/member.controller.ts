@@ -8,7 +8,6 @@ const getProfile = async (req: Request, res: Response) => {
     const result = await memberService.getProfile(req.user._id);
     res.status(HTTP_STATUS.OK).json(result);
   } catch (err: any) {
-    console.log(err);
     res
       .status(err.status || HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json({ message: err.message || AUTH_MESSAGES.INTERNAL_ERROR });

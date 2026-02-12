@@ -1,6 +1,8 @@
 export const AUTH_MESSAGES = {
   REGISTER_SUCCESS: "Register successful",
   EMAIL_EXISTS: "Email already exists",
+  LOGIN_SUCCESS: "Login successful",
+  LOG_OUT_SUCCESS: "Logged out successfully",
   INVALID_CREDENTIALS: "Invalid email or password",
   NO_TOKEN: "No token provided",
   INVALID_TOKEN: "Invalid token",
@@ -21,6 +23,7 @@ export const PERFUME_MESSAGES = {
   CREATED: "Perfume created successfully",
   UPDATED: "Perfume updated successfully",
   DELETED: "Perfume deleted successfully",
+  EXIST_COMMENT: "You have already commented on this perfume",
 } as const;
 
 export const BRAND_MESSAGES = {

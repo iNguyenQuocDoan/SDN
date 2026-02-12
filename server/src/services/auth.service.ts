@@ -66,6 +66,7 @@ const loginMember = async (data: { email: string; password: string }) => {
 
   return {
     status: HTTP_STATUS.OK,
+    message: AUTH_MESSAGES.LOGIN_SUCCESS,
     token,
     record: {
       id: record._id,

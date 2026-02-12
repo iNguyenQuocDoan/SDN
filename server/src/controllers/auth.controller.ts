@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 
 import { HTTP_STATUS } from "../constants/httpStatus";
 import * as authService from "../services/auth.service";
+import { AUTH_MESSAGES } from "../constants/messages";
 
 const register = async (req: Request, res: Response) => {
   try {
@@ -34,4 +35,9 @@ const login = async (req: Request, res: Response) => {
   }
 };
 
-export { register, login };
+const logout = async (req: Request, res: Response) => {
+  res.clearCookie("token");
+  res.status(HTTP_STATUS.OK).json({ message: AUTH_MESSAGES.LOG_OUT_SUCCESS });
+};
+
+export { register, login, logout };

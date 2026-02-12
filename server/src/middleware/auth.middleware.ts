@@ -6,7 +6,7 @@ import { AUTH_MESSAGES } from "../constants/messages";
 
 const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const token = req.cookies.token;
+    const token = req.cookies?.token;
 
     if (!token) {
       res.status(HTTP_STATUS.UNAUTHORIZED).json({
@@ -30,9 +30,10 @@ const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
     (req as any).user = user;
     next();
   } catch (err) {
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+    res.status(HTTP_STATUS.UNAUTHORIZED).json({
       message: AUTH_MESSAGES.INVALID_TOKEN,
     });
+    return;
   }
 };
 

@@ -1,12 +1,27 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
-import { getAll } from "../../services/brand.api";
+import { create, getAll } from "../../services/brand.api";
 
 const BrandManager = () => {
   const [brands, setBrands] = useState<unknown[]>([]);
+  const [brandName, setBrandName] = useState("");
+  const [showForm, setShowForm] = useState(false);
 
   const fetchBrands = async () => {
     const res = await getAll();
     setBrands(res.data);
+  };
+
+  const handleCreate = async () => {
+    try {
+      await create({ brandName });
+      setBrandName("");
+      setShowForm(false);
+      fetchBrands();
+    } catch (err) {
+      console.error("Error creating brand: ", err);
+      throw err;
+    }
   };
 
   useEffect(() => {
@@ -20,10 +35,30 @@ const BrandManager = () => {
         <button
           type="button"
           className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+          onClick={() => setShowForm(!showForm)}
         >
           + Add Brand
         </button>
       </div>
+
+      {showForm && (
+        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+          <input
+            type="text"
+            value={brandName}
+            onChange={(e) => setBrandName(e.target.value)}
+            placeholder="Enter brand name"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 mb-4"
+          />
+          <button
+            type="button"
+            onClick={handleCreate}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+          >
+            Save
+          </button>
+        </div>
+      )}
 
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
         <table className="w-full">
@@ -39,7 +74,7 @@ const BrandManager = () => {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {brands.map((brand: any) => (
-              <tr className="hover:bg-gray-50" key={brand.id}>
+              <tr className="hover:bg-gray-50" key={brand._id}>
                 <td className="px-6 py-4">{brand.brandName}</td>
                 <td className="px-6 py-4 text-right space-x-2">
                   <button

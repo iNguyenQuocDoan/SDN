@@ -11,6 +11,7 @@ import Profile from "./pages/client/Profile";
 import BrandManager from "./pages/admin/BrandManager";
 import PerfumeManager from "./pages/admin/PerfumeManager";
 import Collectors from "./pages/admin/Collectors";
+import AdminLayout from "./components/AdminLayout";
 
 function App() {
   return (
@@ -25,6 +26,8 @@ function App() {
             <Route path="/perfumes" element={<PerfumeList />} />
             <Route path="/perfumes/:id" element={<PerfumeDetail />} />
             <Route path="/profile" element={<Profile />} />
+          </Route>
+          <Route element={<AdminLayout />}>
             <Route path="/admin/brands" element={<BrandManager />} />
             <Route path="/admin/perfumes" element={<PerfumeManager />} />
             <Route path="/admin/collectors" element={<Collectors />} />

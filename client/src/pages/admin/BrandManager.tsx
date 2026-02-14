@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
+import Swal from "sweetalert2";
+import * as yup from "yup";
+
 import { create, getAll, update, remove } from "../../services/brand.api";
+import { brandSchema } from "../../validates/brand.validate";
 
 const BrandManager = () => {
   const [brands, setBrands] = useState<unknown[]>([]);
@@ -16,27 +21,57 @@ const BrandManager = () => {
 
   const handleCreate = async () => {
     try {
+      await brandSchema.validate({ brandName });
       await create({ brandName });
       setBrandName("");
       setShowForm(false);
       fetchBrands();
+      toast.success("Brand created successfully!");
     } catch (err) {
-      console.error("Error creating brand: ", err);
-      throw err;
+      if (err instanceof yup.ValidationError) {
+        toast.error(err.message);
+      } else {
+        toast.error("Failed to create brand. Please try again.");
+      }
     }
   };
 
   const handleUpdate = async (id: string) => {
     if (!editingId) return;
-    await update(id, { brandName: editingName });
-    setEditingId(null);
-    setEditingName("");
-    fetchBrands();
+    try {
+      await brandSchema.validate({ brandName: editingName });
+      await update(id, { brandName: editingName });
+      setEditingId(null);
+      setEditingName("");
+      fetchBrands();
+      toast.success("Brand updated successfully");
+    } catch (err) {
+      if (err instanceof yup.ValidationError) {
+        toast.error(err.message);
+      } else {
+        toast.error("Failed to update brand");
+      }
+    }
   };
 
   const handleDelete = async (id: string) => {
-    await remove(id);
-    fetchBrands();
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "This brand will be deleted!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    });
+    if (!result.isConfirmed) return;
+    try {
+      await remove(id);
+      fetchBrands();
+      toast.success("Brand deleted successfully");
+    } catch (err: any) {
+      console.log("Error deleting brand: ", err);
+      toast.error("Failed to delete brand");
+    }
   };
 
   useEffect(() => {

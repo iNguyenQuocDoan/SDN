@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+
 import Layout from "./components/Layout";
 import LandingPage from "./pages/client/LandingPage";
 import PerfumeList from "./pages/client/PerfumeList";
@@ -13,6 +15,7 @@ import Collectors from "./pages/admin/Collectors";
 function App() {
   return (
     <>
+      <ToastContainer position="top-right" autoClose={3000} />
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>

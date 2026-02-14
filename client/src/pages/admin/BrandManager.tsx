@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
-import { create, getAll } from "../../services/brand.api";
+import { create, getAll, update, remove } from "../../services/brand.api";
 
 const BrandManager = () => {
   const [brands, setBrands] = useState<unknown[]>([]);
   const [brandName, setBrandName] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
 
   const fetchBrands = async () => {
     const res = await getAll();
@@ -22,6 +24,19 @@ const BrandManager = () => {
       console.error("Error creating brand: ", err);
       throw err;
     }
+  };
+
+  const handleUpdate = async (id: string) => {
+    if (!editingId) return;
+    await update(id, { brandName: editingName });
+    setEditingId(null);
+    setEditingName("");
+    fetchBrands();
+  };
+
+  const handleDelete = async (id: string) => {
+    await remove(id);
+    fetchBrands();
   };
 
   useEffect(() => {
@@ -75,17 +90,52 @@ const BrandManager = () => {
           <tbody className="divide-y divide-gray-200">
             {brands.map((brand: any) => (
               <tr className="hover:bg-gray-50" key={brand._id}>
-                <td className="px-6 py-4">{brand.brandName}</td>
+                <td className="px-6 py-4">
+                  {editingId === brand._id ? (
+                    <input
+                      type="text"
+                      value={editingName}
+                      onChange={(e) => setEditingName(e.target.value)}
+                    />
+                  ) : (
+                    brand.brandName
+                  )}
+                </td>
                 <td className="px-6 py-4 text-right space-x-2">
+                  {editingId === brand._id ? (
+                    <>
+                      <button
+                        type="button"
+                        className="px-3 py-1 text-sm bg-green-100 text-green-600 rounded hover:bg-green-200 transition mr-2"
+                        onClick={() => handleUpdate(brand._id)}
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        className="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition"
+                        onClick={() => setEditingId(null)}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <span className="text-gray-500">No edits in progress</span>
+                  )}
                   <button
                     type="button"
                     className="px-3 py-1 text-sm bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition"
+                    onClick={() => {
+                      setEditingId(brand._id);
+                      setEditingName(brand.brandName);
+                    }}
                   >
                     Edit
                   </button>
                   <button
                     type="button"
                     className="px-3 py-1 text-sm bg-red-100 text-red-600 rounded hover:bg-red-200 transition"
+                    onClick={() => handleDelete(brand._id)}
                   >
                     Delete
                   </button>

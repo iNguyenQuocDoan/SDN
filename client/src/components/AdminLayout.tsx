@@ -1,4 +1,7 @@
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { logout } from "../services/auth.api";
+import { toast } from "react-toastify";
 
 const menuItems = [
   { label: "Brands", path: "/admin/brands" },
@@ -8,15 +11,24 @@ const menuItems = [
 
 const AdminLayout = () => {
   const { pathname } = useLocation();
+  const { user, setUser } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    setUser(null);
+    toast.success("Logged out");
+    navigate("/login");
+  };
 
   return (
     <div className="flex min-h-screen">
-      {/* Sidebar */}
-      <aside className="w-64 bg-gray-900 text-white">
+      <aside className="w-64 bg-gray-900 text-white flex flex-col">
         <div className="p-6">
           <h2 className="text-xl font-bold">Admin Panel</h2>
+          {user && <p className="text-gray-400 text-sm mt-1">{user.name}</p>}
         </div>
-        <nav className="mt-4">
+        <nav className="mt-4 flex-1">
           {menuItems.map((item) => (
             <Link
               key={item.path}
@@ -31,17 +43,23 @@ const AdminLayout = () => {
             </Link>
           ))}
         </nav>
-        <div className="mt-auto p-6">
+        <div className="p-6 space-y-3">
           <Link
             to="/"
-            className="text-gray-400 hover:text-white transition text-sm"
+            className="block text-gray-400 hover:text-white transition text-sm"
           >
             Back to Home
           </Link>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full px-4 py-2 text-red-400 border border-red-400 rounded-lg hover:bg-red-400 hover:text-white transition text-sm"
+          >
+            Logout
+          </button>
         </div>
       </aside>
 
-      {/* Content */}
       <main className="flex-1 bg-gray-100">
         <Outlet />
       </main>

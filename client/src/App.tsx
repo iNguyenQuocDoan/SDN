@@ -12,6 +12,8 @@ import Profile from "./pages/client/Profile";
 import BrandManager from "./pages/admin/BrandManager";
 import PerfumeManager from "./pages/admin/PerfumeManager";
 import Collectors from "./pages/admin/Collectors";
+import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
 
 import { AuthProvider } from "./context/AuthContext";
 
@@ -28,12 +30,19 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/perfumes" element={<PerfumeList />} />
               <Route path="/perfumes/:id" element={<PerfumeDetail />} />
-              <Route path="/profile" element={<Profile />} />
+
+              {/* protect */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/profile" element={<Profile />} />
+              </Route>
             </Route>
-            <Route element={<AdminLayout />}>
-              <Route path="/admin/brands" element={<BrandManager />} />
-              <Route path="/admin/perfumes" element={<PerfumeManager />} />
-              <Route path="/admin/collectors" element={<Collectors />} />
+
+            <Route element={<AdminRoute />}>
+              <Route element={<AdminLayout />}>
+                <Route path="/admin/brands" element={<BrandManager />} />
+                <Route path="/admin/perfumes" element={<PerfumeManager />} />
+                <Route path="/admin/collectors" element={<Collectors />} />
+              </Route>
             </Route>
           </Routes>
         </BrowserRouter>

@@ -68,12 +68,13 @@ const loginMember = async (data: { email: string; password: string }) => {
     status: HTTP_STATUS.OK,
     message: AUTH_MESSAGES.LOGIN_SUCCESS,
     token,
-    record: {
+    data: {
       id: record._id,
       email: record.email,
       name: record.name,
       YOB: record.YOB,
       gender: record.gender,
+      isAdmin: record.isAdmin,
     },
   };
 };

@@ -13,24 +13,19 @@ router.get("/:id", brandController.getById);
 // Start admin routes
 router.post(
   "/",
-  // verifyToken,
-  // isAdmin,
+  verifyToken,
+  isAdmin,
   brandValidate.createValidate,
   brandController.create,
 );
 router.put(
   "/:id",
-  // verifyToken,
-  // isAdmin,
+  verifyToken,
+  isAdmin,
   brandValidate.updateValidate,
   brandController.update,
 );
-router.delete(
-  "/:id",
-  //  verifyToken,
-  //   isAdmin,
-  brandController.remove,
-);
+router.delete("/:id", verifyToken, isAdmin, brandController.remove);
 // End admin routers
 
 export default router;

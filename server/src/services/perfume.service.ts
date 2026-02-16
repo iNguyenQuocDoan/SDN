@@ -3,7 +3,7 @@ import { HTTP_STATUS } from "../constants/httpStatus";
 import { PERFUME_MESSAGES } from "../constants/messages";
 
 const getAll = async (query: any) => {
-  const { search, brand } = query;
+  const { search, brand, page = 1, limit = 8 } = query;
 
   //Start filter
   const filter: any = {};
@@ -18,12 +18,28 @@ const getAll = async (query: any) => {
   }
   //End search
 
-  const result = await Perfume.find(filter)
-    .populate("brand")
-    .sort({ createdAt: -1 });
+  const pageNum = Math.max(1, Number(page));
+  const limitNum = Math.max(1, Number(limit));
+  const skip = (pageNum - 1) * limitNum;
+
+  const [result, total] = await Promise.all([
+    Perfume.find(filter)
+      .populate("brand")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum),
+    Perfume.countDocuments(filter),
+  ]);
+
   return {
     status: HTTP_STATUS.OK,
     data: result,
+    pagination: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPages: Math.ceil(total / limitNum),
+    },
   };
 };
 

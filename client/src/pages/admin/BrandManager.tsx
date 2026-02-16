@@ -93,11 +93,14 @@ const BrandManager = () => {
 
       {showForm && (
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Brand Name
+          </label>
           <input
             type="text"
             value={brandName}
             onChange={(e) => setBrandName(e.target.value)}
-            placeholder="Enter brand name"
+            placeholder="e.g. Chanel, Dior, Gucci"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 mb-4"
           />
           <button
@@ -155,7 +158,7 @@ const BrandManager = () => {
                       </button>
                     </>
                   ) : (
-                    <span className="text-gray-500">No edits in progress</span>
+                    <span className="text-gray-500"></span>
                   )}
                   <button
                     type="button"

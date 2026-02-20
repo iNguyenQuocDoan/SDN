@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 
 import { getAll } from "../../services/perfume.api";
 import { getAll as getAllBrands } from "../../services/brand.api";
@@ -28,13 +29,21 @@ const PerfumeList = () => {
 
   const fetchPerfumes = async (currentPage = page) => {
     setLoading(true);
-    const query: any = { page: currentPage, limit: 8 };
-    if (search) query.search = search;
-    if (brandFilter) query.brand = brandFilter;
-    const res = await getAll(query);
-    setPerfumes(res.data);
-    setTotalPages(res.pagination.totalPages);
-    setLoading(false);
+    try {
+      const query: any = { page: currentPage, limit: 8 };
+      if (search) query.search = search;
+      if (brandFilter) query.brand = brandFilter;
+
+      const res = await getAll(query);
+      setPerfumes(res.data);
+      setTotalPages(res.pagination.totalPages);
+    } catch {
+      setPerfumes([]);
+      setTotalPages(1);
+      toast.error("Failed to load perfumes");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -47,8 +56,11 @@ const PerfumeList = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setPage(1);
-    fetchPerfumes(1);
+    if (page === 1) {
+      fetchPerfumes(1);
+    } else {
+      setPage(1); // useEffect sẽ tự trigger fetchPerfumes
+    }
   };
 
   const handleBrandChange = (e: React.ChangeEvent<HTMLSelectElement>) => {

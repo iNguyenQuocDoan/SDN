@@ -1,10 +1,74 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState, type FormEvent } from "react";
-import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
+import { useParams, Link } from "react-router-dom";
 import { toast } from "react-toastify";
+
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
 import { getById, addComment } from "../../services/perfume.api";
 import { useAuth } from "../../context/AuthContext";
+import { Button } from "@/components/ui/button";
+
+/* ── Helpers ─────────────────────────────────────────────── */
+
+const concBadgeClass = (conc: string) => {
+  const map: Record<string, string> = {
+    Extrait: "badge badge-extrait",
+    EDP: "badge badge-edp",
+    EDT: "badge badge-edt",
+    EDC: "badge badge-edc",
+    "Eau Fraiche": "badge badge-edc",
+  };
+  return map[conc] ?? "badge badge-edt";
+};
+
+const audienceBadgeClass = (target: string) => {
+  const map: Record<string, string> = {
+    male: "badge badge-male",
+    female: "badge badge-female",
+    unisex: "badge badge-unisex",
+  };
+  return map[target] ?? "badge badge-unisex";
+};
+
+const RATING_LABELS: Record<number, string> = {
+  1: "Fair",
+  2: "Good",
+  3: "Excellent",
+};
+
+/* ── Loading Skeleton ────────────────────────────────────── */
+
+const DetailSkeleton = () => (
+  <div className="mx-auto max-w-7xl px-4 pt-4 pb-8 sm:px-6 sm:pt-5">
+    <div className="panel animate-pulse overflow-hidden">
+      <div className="grid md:grid-cols-2">
+        <div className="min-h-[360px] bg-[rgba(104,115,133,0.13)] md:min-h-[500px]" />
+        <div className="space-y-5 p-8">
+          <div className="h-3 w-20 rounded-full bg-[rgba(104,115,133,0.15)]" />
+          <div className="h-9 w-3/4 rounded-lg bg-[rgba(104,115,133,0.15)]" />
+          <div className="flex gap-2">
+            <div className="h-6 w-16 rounded-full bg-[rgba(188,116,27,0.2)]" />
+            <div className="h-6 w-16 rounded-full bg-[rgba(104,115,133,0.13)]" />
+          </div>
+          <div className="h-4 w-full rounded bg-[rgba(104,115,133,0.12)]" />
+          <div className="h-4 w-2/3 rounded bg-[rgba(104,115,133,0.12)]" />
+          <div className="space-y-3 pt-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex justify-between">
+                <div className="h-4 w-20 rounded bg-[rgba(104,115,133,0.12)]" />
+                <div className="h-4 w-24 rounded bg-[rgba(104,115,133,0.12)]" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+/* ── Page ────────────────────────────────────────────────── */
 
 const PerfumeDetail = () => {
   const { id } = useParams();
@@ -24,13 +88,14 @@ const PerfumeDetail = () => {
 
   useEffect(() => {
     fetchPerfume();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const handleSubmitComment = async (e: FormEvent) => {
     e.preventDefault();
     try {
       await addComment(id as string, { rating, content });
-      toast.success("Review submitted!");
+      toast.success("Review submitted");
       setContent("");
       setRating(3);
       fetchPerfume();
@@ -39,178 +104,282 @@ const PerfumeDetail = () => {
     }
   };
 
-  if (!perfume) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 py-8 animate-pulse">
-        <div className="bg-white rounded-xl shadow-md overflow-hidden">
-          <div className="md:flex">
-            <div className="md:w-1/2 h-96 bg-gray-200" />
-            <div className="p-8 md:w-1/2 space-y-4">
-              <div className="h-4 bg-gray-200 rounded w-1/4" />
-              <div className="h-8 bg-gray-200 rounded w-3/4" />
-              <div className="h-4 bg-gray-200 rounded w-full" />
-              <div className="h-4 bg-gray-200 rounded w-2/3" />
-              <div className="space-y-3 mt-6">
-                <div className="h-6 bg-gray-200 rounded" />
-                <div className="h-6 bg-gray-200 rounded" />
-                <div className="h-6 bg-gray-200 rounded" />
-                <div className="h-6 bg-gray-200 rounded" />
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="mt-8 space-y-4">
-          <div className="h-7 bg-gray-200 rounded w-1/4" />
-          <div className="bg-white rounded-xl shadow-md p-6 space-y-3">
-            <div className="h-4 bg-gray-200 rounded w-1/3" />
-            <div className="h-4 bg-gray-200 rounded w-full" />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (!perfume) return <DetailSkeleton />;
 
   const hasCommented = perfume.comments?.some(
     (c: any) => c.author?._id === user?._id,
   );
 
+  const totalReviews: number = perfume.comments?.length ?? 0;
+  const avgRating: number | null =
+    totalReviews > 0
+      ? Math.round(
+          perfume.comments.reduce(
+            (s: number, c: any) => s + c.rating,
+            0,
+          ) / totalReviews,
+        )
+      : null;
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Perfume Info */}
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
-        <div className="md:flex">
-          <div className="md:w-1/2 h-96 bg-gray-200 flex items-center justify-center overflow-hidden">
+    <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 pt-2 pb-8 sm:px-6">
+
+      {/* ── PRODUCT HERO ─────────────────────────────────────── */}
+      <section className="panel overflow-hidden">
+        <div className="grid md:grid-cols-[1fr_1.15fr]">
+
+          {/* Image panel */}
+          <div className="relative min-h-55 bg-[rgba(104,115,133,0.09)] md:min-h-90">
             {perfume.uri ? (
               <img
                 src={perfume.uri}
                 alt={perfume.perfumeName}
-                className="w-full h-full object-cover"
+                className="h-full w-full object-cover"
               />
             ) : (
-              <span className="text-gray-400 text-lg">Image</span>
+              <div className="flex h-full flex-col items-center justify-center gap-3 text-[var(--muted)]">
+                <svg
+                  width="64"
+                  height="88"
+                  viewBox="0 0 72 100"
+                  fill="none"
+                  className="opacity-20"
+                  aria-hidden="true"
+                >
+                  <rect x="24" y="0" width="24" height="14" rx="4" fill="currentColor" />
+                  <rect x="28" y="10" width="16" height="6" rx="2" fill="currentColor" opacity="0.6" />
+                  <path
+                    d="M10 24 Q6 32 6 46 L6 88 Q6 94 12 94 L60 94 Q66 94 66 88 L66 46 Q66 32 62 24 Z"
+                    fill="currentColor"
+                    opacity="0.35"
+                    stroke="currentColor"
+                    strokeWidth="1"
+                  />
+                </svg>
+                <p className="text-sm font-medium">No image available</p>
+              </div>
             )}
           </div>
-          <div className="p-8 md:w-1/2">
-            <p className="text-purple-600 text-sm font-medium mb-2">
-              {perfume.brand?.brandName}
-            </p>
-            <h1 className="text-3xl font-bold mb-4">{perfume.perfumeName}</h1>
-            <p className="text-gray-600 mb-4">{perfume.description}</p>
-            <p className="text-gray-500 text-sm mb-6">
-              Ingredients: {perfume.ingredients}
-            </p>
-            <div className="space-y-3 mb-6">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Price</span>
-                <span className="text-2xl font-bold text-purple-600">
+
+          {/* Info panel */}
+          <div className="flex flex-col gap-4 p-5 sm:p-6 lg:p-8">
+
+            {/* Brand + back link */}
+            <div className="flex items-center justify-between gap-3">
+              <p className="eyebrow">{perfume.brand?.brandName}</p>
+              <Link
+                to="/perfumes"
+                className="group inline-flex items-center gap-1.5 rounded-full border border-(--line) bg-white/60 px-3.5 py-1.5 text-xs font-semibold text-(--muted) shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-(--brand) hover:bg-[rgba(188,116,27,0.08)] hover:text-(--brand-strong) hover:shadow-md"
+              >
+                <ArrowLeftIcon className="h-3.5 w-3.5 transition-transform duration-200 group-hover:-translate-x-0.5" />
+                Back to archive
+              </Link>
+            </div>
+
+            {/* Title */}
+            <h1 className="font-display text-3xl leading-tight text-[var(--text)] sm:text-4xl">
+              {perfume.perfumeName}
+            </h1>
+
+            {/* Tags row */}
+            <div className="flex flex-wrap gap-2">
+              <span className={concBadgeClass(perfume.concentration)}>
+                {perfume.concentration}
+              </span>
+              <span className={audienceBadgeClass(perfume.targetAudience)}>
+                {perfume.targetAudience}
+              </span>
+              <span className="badge badge-edc">{perfume.volume}ml</span>
+            </div>
+
+            {/* Rating summary */}
+            {avgRating !== null && (
+              <div className="flex items-center gap-2">
+                <span className="stars-filled text-lg">
+                  {"★".repeat(avgRating)}
+                </span>
+                <span className="stars-empty text-lg">
+                  {"★".repeat(3 - avgRating)}
+                </span>
+                <span className="text-sm font-semibold text-[var(--muted)]">
+                  {totalReviews} review{totalReviews !== 1 ? "s" : ""}
+                </span>
+              </div>
+            )}
+
+            {/* Description */}
+            {perfume.description && (
+              <p className="border-l-2 border-[color:var(--line)] pl-4 text-sm leading-relaxed text-[var(--muted)]">
+                {perfume.description}
+              </p>
+            )}
+
+            {/* Key facts table */}
+            <div className="panel-soft overflow-hidden rounded-2xl divide-y divide-[color:var(--line)]">
+              <div className="flex items-center justify-between px-5 py-3.5">
+                <span className="text-sm font-medium text-[var(--muted)]">Price</span>
+                <span className="text-2xl font-extrabold text-[var(--brand-strong)]">
                   ${perfume.price}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Volume</span>
-                <span className="font-medium">{perfume.volume}ml</span>
+              <div className="flex items-center justify-between px-5 py-3.5">
+                <span className="text-sm font-medium text-[var(--muted)]">Volume</span>
+                <span className="text-sm font-bold">{perfume.volume}ml</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Concentration</span>
-                {perfume.concentration === "Extrait" ? (
-                  <span className="px-3 py-0.5 bg-yellow-100 text-yellow-700 font-semibold rounded">
-                    Extrait
-                  </span>
-                ) : (
-                  <span className="font-medium">{perfume.concentration}</span>
-                )}
+              <div className="flex items-center justify-between px-5 py-3.5">
+                <span className="text-sm font-medium text-[var(--muted)]">Concentration</span>
+                <span className={concBadgeClass(perfume.concentration)}>
+                  {perfume.concentration}
+                </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Target Audience</span>
-                <span className="font-medium">{perfume.targetAudience}</span>
+              <div className="flex items-center justify-between px-5 py-3.5">
+                <span className="text-sm font-medium text-[var(--muted)]">For</span>
+                <span className={audienceBadgeClass(perfume.targetAudience)}>
+                  {perfume.targetAudience}
+                </span>
               </div>
             </div>
+
+            {/* Ingredients */}
+            {perfume.ingredients && (
+              <div className="rounded-xl bg-[rgba(31,93,99,0.07)] px-5 py-4">
+                <p className="eyebrow mb-1.5">Ingredients</p>
+                <p className="text-sm leading-relaxed text-[var(--muted)]">
+                  {perfume.ingredients}
+                </p>
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Comments Section */}
-      <div className="mt-8">
-        <h2 className="text-2xl font-bold mb-6">Reviews</h2>
+      {/* ── REVIEWS ──────────────────────────────────────────── */}
+      <section className="space-y-6">
+        <div>
+          <h2 className="font-display text-3xl">
+            Reviews
+            {totalReviews > 0 && (
+              <span className="ml-2 font-sans text-lg font-bold text-[var(--muted)]">
+                ({totalReviews})
+              </span>
+            )}
+          </h2>
+        </div>
 
-        {/* Comment Form - chỉ hiện khi đã đăng nhập và chưa comment */}
+        <hr className="divider" />
+
+        {/* Write review form */}
         {user && !hasCommented && (
-          <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-            <h3 className="text-lg font-semibold mb-4">Write a Review</h3>
-            <form className="space-y-4" onSubmit={handleSubmitComment}>
+          <div className="panel space-y-5 p-6 sm:p-7">
+            <h3 className="font-display text-xl">Write a review</h3>
+            <form className="space-y-5" onSubmit={handleSubmitComment}>
+
+              {/* Star rating selector */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Rating
+                <label className="mb-2 block text-sm font-semibold text-[var(--muted)]">
+                  Your rating
                 </label>
-                <div className="flex gap-2">
-                  {[1, 2, 3].map((star) => (
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3].map((value) => (
                     <button
-                      key={star}
+                      key={value}
                       type="button"
-                      onClick={() => setRating(star)}
-                      className={`text-3xl transition ${
-                        star <= rating
-                          ? "text-yellow-400"
-                          : "text-gray-300"
-                      } hover:text-yellow-400`}
+                      onClick={() => setRating(value)}
+                      aria-label={`Rate ${value} star${value > 1 ? "s" : ""}`}
+                      className={`text-3xl transition-transform duration-150 hover:scale-125 focus-visible:outline-none ${
+                        value <= rating ? "stars-filled" : "stars-empty"
+                      }`}
                     >
                       ★
                     </button>
                   ))}
-                  <span className="ml-2 text-sm text-gray-500 self-center">
-                    {rating === 3 ? "Excellent" : rating === 2 ? "Good" : "Poor"}
+                  <span className="ml-3 rounded-full bg-[rgba(188,116,27,0.12)] px-3 py-1 text-xs font-bold uppercase tracking-wide text-[var(--brand-strong)]">
+                    {RATING_LABELS[rating]}
                   </span>
                 </div>
               </div>
+
+              {/* Comment */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Comment
+                <label className="mb-1.5 block text-sm font-semibold text-[var(--muted)]">
+                  Your thoughts
                 </label>
                 <textarea
-                  rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="Write your review..."
+                  rows={4}
+                  className="field"
+                  placeholder="Share your experience with this fragrance…"
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                 />
               </div>
-              <button
-                type="submit"
-                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
-              >
-                Submit Review
-              </button>
+
+              <Button type="submit" size="lg" className="px-7 uppercase tracking-wide">
+                Submit review
+              </Button>
             </form>
           </div>
         )}
 
-        {!user && (
-          <p className="text-gray-400 mb-6">Please login to write a review.</p>
+        {/* Already reviewed notice */}
+        {user && hasCommented && (
+          <div className="panel-soft flex items-center gap-3 rounded-2xl p-4 text-sm text-[var(--muted)]">
+            <span className="text-base text-[var(--accent)]">✓</span>
+            You've already reviewed this fragrance.
+          </div>
         )}
 
-        {/* Comment List */}
+        {/* Sign-in prompt */}
+        {!user && (
+          <div className="panel-soft flex flex-wrap items-center justify-between gap-4 rounded-2xl p-5">
+            <p className="text-sm text-[var(--muted)]">
+              Have thoughts on this fragrance? Sign in to leave a review.
+            </p>
+            <Link
+              to="/login"
+              className="btn-main rounded-full px-5 py-2 text-xs font-bold uppercase tracking-wide"
+            >
+              Sign in
+            </Link>
+          </div>
+        )}
+
+        {/* Review list */}
         <div className="space-y-4">
-          {perfume.comments?.length === 0 && (
-            <p className="text-gray-400">No reviews yet.</p>
+          {totalReviews === 0 && (
+            <div className="panel-soft flex flex-col items-center gap-3 rounded-2xl py-12 text-center">
+              <p className="font-display text-lg text-[var(--text)]">No reviews yet</p>
+              <p className="text-sm text-[var(--muted)]">Be the first to share your experience.</p>
+            </div>
           )}
+
           {perfume.comments?.map((comment: any, index: number) => (
-            <div key={index} className="bg-white rounded-xl shadow-md p-6">
-              <div className="flex items-center justify-between mb-3">
+            <div key={index} className="review-card">
+              <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+                {/* Author */}
                 <div>
-                  <span className="font-semibold">{comment.author?.name}</span>
-                  <span className="text-gray-400 text-sm ml-2">
-                    {comment.author?.email}
+                  <p className="font-semibold text-[var(--text)]">{comment.author?.name}</p>
+                  <p className="text-xs text-[var(--muted)]">{comment.author?.email}</p>
+                </div>
+                {/* Stars + label */}
+                <div className="flex items-center gap-2">
+                  <span className="stars-filled text-base">
+                    {"★".repeat(comment.rating)}
+                  </span>
+                  <span className="stars-empty text-base">
+                    {"★".repeat(3 - comment.rating)}
+                  </span>
+                  <span className="rounded-full bg-[rgba(188,116,27,0.1)] px-2.5 py-0.5 text-xs font-bold text-[var(--brand-strong)]">
+                    {RATING_LABELS[comment.rating]}
                   </span>
                 </div>
-                <span className="text-yellow-400 font-bold text-lg">
-                  {"★".repeat(comment.rating)}{"☆".repeat(3 - comment.rating)}
-                </span>
               </div>
-              <p className="text-gray-600">{comment.content}</p>
+              <p className="text-sm leading-relaxed text-[var(--text)]">
+                {comment.content}
+              </p>
             </div>
           ))}
         </div>
-      </div>
+      </section>
     </div>
   );
 };

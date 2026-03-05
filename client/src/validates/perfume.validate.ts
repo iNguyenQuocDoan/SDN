@@ -18,7 +18,7 @@ export const perfumeSchema = yup.object({
   targetAudience: yup
     .string()
     .required("Target audience is required")
-    .oneOf(["male", "female", "unisex"]),
+    .oneOf(["male", "female"]),
   brand: yup.string().required("Brand is required"),
   ingredients: yup.string().required("Ingredients is required").trim(),
   description: yup.string().required("Description is required").trim(),

@@ -18,5 +18,6 @@ router.post(
 );
 
 router.post("/logout", authController.logout);
+router.post("/firebase-login", authController.firebaseLogin);
 
 export default router;

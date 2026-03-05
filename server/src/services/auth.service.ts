@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { HTTP_STATUS } from "../constants/httpStatus";
 import { AUTH_MESSAGES } from "../constants/messages";
 
+import { verifyFirebaseToken } from "../lib/firebase";
 import Member from "../models/member.model";
 
 const registerMember = async (data: {
@@ -14,9 +15,12 @@ const registerMember = async (data: {
 }) => {
   const emailExists = await Member.findOne({ email: data.email });
   if (emailExists) {
+    const isOAuthAccount = emailExists.YOB === 0;
     throw {
       status: HTTP_STATUS.BAD_REQUEST,
-      message: AUTH_MESSAGES.EMAIL_EXISTS,
+      message: isOAuthAccount
+        ? AUTH_MESSAGES.EMAIL_REGISTERED_VIA_GOOGLE
+        : AUTH_MESSAGES.EMAIL_EXISTS,
     };
   }
 
@@ -29,7 +33,7 @@ const registerMember = async (data: {
     status: HTTP_STATUS.CREATED,
     message: AUTH_MESSAGES.REGISTER_SUCCESS,
     data: {
-      id: newRecord._id,
+      _id: newRecord._id,
       email: newRecord.email,
       name: newRecord.name,
       YOB: newRecord.YOB,
@@ -69,7 +73,7 @@ const loginMember = async (data: { email: string; password: string }) => {
     message: AUTH_MESSAGES.LOGIN_SUCCESS,
     token,
     data: {
-      id: record._id,
+      _id: record._id,
       email: record.email,
       name: record.name,
       YOB: record.YOB,
@@ -79,4 +83,45 @@ const loginMember = async (data: { email: string; password: string }) => {
   };
 };
 
-export { registerMember, loginMember };
+const firebaseLogin = async (idToken: string) => {
+  const { email, name } = await verifyFirebaseToken(idToken);
+
+  let member = await Member.findOne({ email });
+
+  if (!member) {
+    // Create new member for OAuth users with placeholder values
+    const randomPassword = await bcrypt.hash(
+      Math.random().toString(36) + Date.now(),
+      10,
+    );
+    member = await new Member({
+      email,
+      name,
+      password: randomPassword,
+      YOB: 0,
+      gender: false,
+    }).save();
+  }
+
+  const token = jwt.sign(
+    { id: member._id, email: member.email },
+    process.env.JWT_SECRET as string,
+    { expiresIn: "1d" },
+  );
+
+  return {
+    status: HTTP_STATUS.OK,
+    message: AUTH_MESSAGES.LOGIN_SUCCESS,
+    token,
+    data: {
+      _id: member._id,
+      email: member.email,
+      name: member.name,
+      YOB: member.YOB,
+      gender: member.gender,
+      isAdmin: member.isAdmin,
+    },
+  };
+};
+
+export { registerMember, loginMember, firebaseLogin };

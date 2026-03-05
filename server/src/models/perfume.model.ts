@@ -73,6 +73,7 @@ const perfumeSchema = new mongoose.Schema(
     targetAudience: {
       type: String,
       required: true,
+      enum: ["male", "female"],
     },
     brand: {
       type: mongoose.Schema.Types.ObjectId,

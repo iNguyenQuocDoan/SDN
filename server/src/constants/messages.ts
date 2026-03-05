@@ -1,6 +1,7 @@
 export const AUTH_MESSAGES = {
   REGISTER_SUCCESS: "Register successful",
   EMAIL_EXISTS: "Email already exists",
+  EMAIL_REGISTERED_VIA_GOOGLE: "This email is registered via Google. Please sign in with Google instead.",
   LOGIN_SUCCESS: "Login successful",
   LOG_OUT_SUCCESS: "Logged out successfully",
   INVALID_CREDENTIALS: "Invalid email or password",

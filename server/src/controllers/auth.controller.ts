@@ -22,16 +22,18 @@ const register = async (req: Request, res: Response) => {
 const login = async (req: Request, res: Response) => {
   try {
     const result = await authService.loginMember(req.body);
+    const { token, ...responseData } = result;
+    const isProd = process.env.NODE_ENV === "production";
 
     //cookie
-    res.cookie("token", result.token, {
+    res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: isProd,
       sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
 
-    res.status(HTTP_STATUS.OK).json(result);
+    res.status(HTTP_STATUS.OK).json(responseData);
   } catch (error: any) {
     if (error.status) {
       res.status(error.status).json({ message: error.message });
@@ -44,8 +46,38 @@ const login = async (req: Request, res: Response) => {
 };
 
 const logout = async (req: Request, res: Response) => {
-  res.clearCookie("token");
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  });
   res.status(HTTP_STATUS.OK).json({ message: AUTH_MESSAGES.LOG_OUT_SUCCESS });
 };
 
-export { register, login, logout };
+const firebaseLogin = async (req: Request, res: Response) => {
+  try {
+    const { idToken } = req.body;
+    const result = await authService.firebaseLogin(idToken);
+    const { token, ...responseData } = result;
+    const isProd = process.env.NODE_ENV === "production";
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: "strict",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    res.status(HTTP_STATUS.OK).json(responseData);
+  } catch (error: any) {
+    if (error.status) {
+      res.status(error.status).json({ message: error.message });
+    } else {
+      res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json({ message: AUTH_MESSAGES.INTERNAL_ERROR });
+    }
+  }
+};
+
+export { register, login, logout, firebaseLogin };

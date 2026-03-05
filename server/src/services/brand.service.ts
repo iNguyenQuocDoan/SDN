@@ -1,4 +1,5 @@
 import Brand from "../models/brand.model";
+import Perfume from "../models/perfume.model";
 import { HTTP_STATUS } from "../constants/httpStatus";
 import { BRAND_MESSAGES } from "../constants/messages";
 
@@ -53,6 +54,7 @@ const remove = async (id: string) => {
       message: BRAND_MESSAGES.NOT_FOUND,
     };
   }
+  await Perfume.deleteMany({ brand: id });
   return { status: HTTP_STATUS.OK, message: BRAND_MESSAGES.DELETED };
 };
 

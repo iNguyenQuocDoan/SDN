@@ -2,6 +2,26 @@ import Perfume from "../models/perfume.model";
 import { HTTP_STATUS } from "../constants/httpStatus";
 import { PERFUME_MESSAGES } from "../constants/messages";
 
+const toSearchRegex = (str: string): string => {
+  const map: Record<string, string> = {
+    a: "[aàáảãạăằắẳẵặâầấẩẫậ]",
+    e: "[eèéẻẽẹêềếểễệ]",
+    i: "[iìíỉĩị]",
+    o: "[oòóỏõọôồốổỗộơờớởỡợ]",
+    u: "[uùúủũụưừứửữự]",
+    y: "[yỳýỷỹỵ]",
+    d: "[dđ]",
+  };
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[đĐ]/g, "d")
+    .toLowerCase()
+    .split("")
+    .map((c) => map[c] ?? c)
+    .join("");
+};
+
 const getAll = async (query: any) => {
   const { search, brand, page = 1, limit = 8 } = query;
 
@@ -14,7 +34,7 @@ const getAll = async (query: any) => {
 
   //Start search
   if (search) {
-    filter.perfumeName = { $regex: search, $options: "i" };
+    filter.perfumeName = { $regex: toSearchRegex(search), $options: "i" };
   }
   //End search
 

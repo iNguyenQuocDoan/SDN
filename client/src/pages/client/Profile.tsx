@@ -4,13 +4,13 @@ import { toast } from "react-toastify";
 
 import { useAuth } from "../../context/AuthContext";
 import { updateProfile, changePassword } from "../../services/member.api";
+import { Button } from "@/components/ui/button";
 
 const Profile = () => {
   const { user, setUser } = useAuth();
   const [name, setName] = useState(user?.name || "");
   const [YOB, setYOB] = useState(user?.YOB || 2000);
   const [gender, setGender] = useState(user?.gender ?? true);
-
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
@@ -19,7 +19,7 @@ const Profile = () => {
     try {
       const res = await updateProfile({ name, YOB, gender });
       setUser(res.data);
-      toast.success("Profile updated!");
+      toast.success("Profile updated");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to update profile");
     }
@@ -29,7 +29,7 @@ const Profile = () => {
     e.preventDefault();
     try {
       await changePassword({ oldPassword, newPassword });
-      toast.success("Password changed!");
+      toast.success("Password changed");
       setOldPassword("");
       setNewPassword("");
     } catch (err: any) {
@@ -38,43 +38,47 @@ const Profile = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">My Profile</h1>
+    <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-8 sm:px-6 sm:py-10">
+      <header>
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--muted)]">
+          Account Center
+        </p>
+        <h1 className="font-display mt-2 text-4xl">My profile</h1>
+      </header>
 
-      {/* Profile Info */}
-      <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Profile Information</h2>
-        <form className="space-y-4" onSubmit={handleUpdateProfile}>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+      <section className="panel p-6 sm:p-8">
+        <h2 className="mb-4 text-lg font-bold">Profile information</h2>
+        <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleUpdateProfile}>
+          <div className="sm:col-span-2">
+            <label className="mb-1 block text-sm font-semibold text-[var(--muted)]">
               Name
             </label>
             <input
               type="text"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="field"
               placeholder="Your name"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="mb-1 block text-sm font-semibold text-[var(--muted)]">
               Year of Birth
             </label>
             <input
               type="number"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="field"
               value={YOB}
               onChange={(e) => setYOB(Number(e.target.value))}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="mb-1 block text-sm font-semibold text-[var(--muted)]">
               Gender
             </label>
             <select
               title="Gender"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="field"
               value={String(gender)}
               onChange={(e) => setGender(e.target.value === "true")}
             >
@@ -82,51 +86,46 @@ const Profile = () => {
               <option value="false">Female</option>
             </select>
           </div>
-          <button
-            type="submit"
-            className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
-          >
-            Update Profile
-          </button>
+          <div className="sm:col-span-2">
+            <Button type="submit" size="lg">
+              Update profile
+            </Button>
+          </div>
         </form>
-      </div>
+      </section>
 
-      {/* Change Password */}
-      <div className="bg-white rounded-xl shadow-md p-6">
-        <h2 className="text-xl font-semibold mb-4">Change Password</h2>
-        <form className="space-y-4" onSubmit={handleChangePassword}>
+      <section className="panel p-6 sm:p-8">
+        <h2 className="mb-4 text-lg font-bold">Change password</h2>
+        <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleChangePassword}>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Current Password
+            <label className="mb-1 block text-sm font-semibold text-[var(--muted)]">
+              Current password
             </label>
             <input
               type="password"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              placeholder="Enter current password"
+              className="field"
               value={oldPassword}
               onChange={(e) => setOldPassword(e.target.value)}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              New Password
+            <label className="mb-1 block text-sm font-semibold text-[var(--muted)]">
+              New password
             </label>
             <input
               type="password"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              placeholder="Enter new password"
+              className="field"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
             />
           </div>
-          <button
-            type="submit"
-            className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
-          >
-            Change Password
-          </button>
+          <div className="sm:col-span-2">
+            <Button type="submit" size="lg">
+              Change password
+            </Button>
+          </div>
         </form>
-      </div>
+      </section>
     </div>
   );
 };

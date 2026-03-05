@@ -21,4 +21,9 @@ const logout = async () => {
   return res.data;
 };
 
-export { register, login, logout };
+const loginWithFirebase = async (idToken: string) => {
+  const res = await http.post("/auth/firebase-login", { idToken });
+  return res.data;
+};
+
+export { register, login, logout, loginWithFirebase };

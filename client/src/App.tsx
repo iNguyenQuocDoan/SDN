@@ -16,6 +16,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 
 import { AuthProvider } from "./context/AuthContext";
+import { ScrollToTop } from "./components/ScrollToTop";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
       <ToastContainer position="top-right" autoClose={3000} />
       <AuthProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             <Route element={<Layout />}>
               <Route path="/" element={<LandingPage />} />

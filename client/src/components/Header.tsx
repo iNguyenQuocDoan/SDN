@@ -1,86 +1,206 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import {
+  HomeIcon,
+  BeakerIcon,
+  Cog6ToothIcon,
+  UserIcon,
+  ArrowRightOnRectangleIcon,
+  ArrowLeftOnRectangleIcon,
+  UserPlusIcon,
+  Bars3Icon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
+
 import { useAuth } from "../context/AuthContext";
 import { logout } from "../services/auth.api";
 import { toast } from "react-toastify";
+import { Button } from "@/components/ui/button";
+
+/* ── Header ──────────────────────────────────────────────── */
 
 const Header = () => {
   const { user, setUser } = useAuth();
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
     setUser(null);
     toast.success("Logged out");
     navigate("/login");
+    setMenuOpen(false);
   };
 
+  const navClass = ({ isActive }: { isActive: boolean }) =>
+    `flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition ${
+      isActive
+        ? "bg-[rgba(188,116,27,0.16)] text-[var(--brand-strong)]"
+        : "text-[var(--muted)] hover:bg-[rgba(188,116,27,0.1)] hover:text-[var(--text)]"
+    }`;
+
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          <Link to="/" className="text-2xl font-bold text-purple-600">
-            Perfume Shop
+    <header className="sticky top-0 z-50 border-b border-[color:var(--line)] bg-[rgba(255,252,245,0.9)] backdrop-blur-md">
+      {/*
+        3-column flex layout — nav stays in true center:
+        [flex-1 logo] · [auto nav] · [flex-1 CTA right-aligned]
+      */}
+      <div className="mx-auto flex max-w-7xl items-center px-4 py-3 sm:px-6">
+
+        {/* ── Col 1: Logo ───────────────────── */}
+        <div className="flex-1">
+          <Link
+            to="/"
+            className="group inline-block"
+            onClick={() => setMenuOpen(false)}
+          >
+            <p className="font-display text-xl leading-none text-[var(--text)] sm:text-2xl">
+              Atelier Scent
+            </p>
+            <p className="text-[0.6rem] font-bold uppercase tracking-[0.24em] text-[var(--muted)] transition-colors group-hover:text-[var(--brand)]">
+              Perfume Archive
+            </p>
           </Link>
+        </div>
 
-          <nav className="flex items-center gap-8">
-            <Link
-              to="/"
-              className="text-gray-600 hover:text-purple-600 transition"
-            >
-              Home
-            </Link>
-            <Link
-              to="/perfumes"
-              className="text-gray-600 hover:text-purple-600 transition"
-            >
-              Perfumes
-            </Link>
-            {user?.isAdmin && (
-              <Link
-                to="/admin/brands"
-                className="text-gray-600 hover:text-purple-600 transition"
-              >
-                Admin
-              </Link>
-            )}
-          </nav>
+        {/* ── Col 2: Nav (centered) ─────────── */}
+        <nav className="hidden items-center gap-1 md:flex">
+          <NavLink to="/" end className={navClass}>
+            <HomeIcon className="h-4 w-4" />
+            Home
+          </NavLink>
+          <NavLink to="/perfumes" className={navClass}>
+            <BeakerIcon className="h-4 w-4" />
+            Perfumes
+          </NavLink>
+          {user?.isAdmin && (
+            <NavLink to="/admin/brands" className={navClass}>
+              <Cog6ToothIcon className="h-4 w-4" />
+              Admin
+            </NavLink>
+          )}
+        </nav>
 
-          <div className="flex items-center gap-3">
+        {/* ── Col 3: CTA + hamburger ────────── */}
+        <div className="flex flex-1 items-center justify-end gap-2">
+
+          {/* Desktop CTA */}
+          <div className="hidden items-center gap-2 md:flex">
             {user ? (
               <>
                 <Link
                   to="/profile"
-                  className="text-gray-600 hover:text-purple-600 transition"
+                  className="flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-[var(--accent)] transition hover:bg-[rgba(31,93,99,0.1)]"
                 >
+                  <UserIcon className="h-4 w-4" />
                   {user.name}
                 </Link>
-                <button
-                  type="button"
+                <Button
+                  variant="destructive"
+                  size="pill"
                   onClick={handleLogout}
-                  className="px-4 py-2 text-red-600 border border-red-600 rounded-lg hover:bg-red-50 transition"
                 >
+                  <ArrowLeftOnRectangleIcon className="h-4 w-4" />
                   Logout
-                </button>
+                </Button>
               </>
             ) : (
               <>
                 <Link
                   to="/login"
-                  className="px-4 py-2 text-purple-600 border border-purple-600 rounded-lg hover:bg-purple-50 transition"
+                  className="btn-ghost flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold"
                 >
+                  <ArrowRightOnRectangleIcon className="h-4 w-4" />
                   Login
                 </Link>
                 <Link
                   to="/register"
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+                  className="btn-main flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold"
                 >
+                  <UserPlusIcon className="h-4 w-4" />
+                  Register
+                </Link>
+              </>
+            )}
+          </div>
+
+          {/* Mobile hamburger */}
+          <button
+            type="button"
+            aria-label={menuOpen ? "Close navigation" : "Open navigation"}
+            onClick={() => setMenuOpen((v) => !v)}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--line)] bg-[rgba(255,253,248,0.8)] text-[var(--muted)] transition hover:text-[var(--text)] md:hidden"
+          >
+            {menuOpen
+              ? <XMarkIcon className="h-5 w-5" />
+              : <Bars3Icon className="h-5 w-5" />
+            }
+          </button>
+        </div>
+      </div>
+
+      {/* ── Mobile drawer ─────────────────────── */}
+      {menuOpen && (
+        <div className="border-t border-[color:var(--line)] bg-[rgba(255,252,245,0.97)] px-4 pb-5 pt-3 md:hidden">
+          <nav className="flex flex-col gap-1">
+            <NavLink to="/" end className={navClass} onClick={() => setMenuOpen(false)}>
+              <HomeIcon className="h-4 w-4" />
+              Home
+            </NavLink>
+            <NavLink to="/perfumes" className={navClass} onClick={() => setMenuOpen(false)}>
+              <BeakerIcon className="h-4 w-4" />
+              Perfumes
+            </NavLink>
+            {user?.isAdmin && (
+              <NavLink to="/admin/brands" className={navClass} onClick={() => setMenuOpen(false)}>
+                <Cog6ToothIcon className="h-4 w-4" />
+                Admin
+              </NavLink>
+            )}
+          </nav>
+          <div className="mt-3 flex flex-col gap-2 border-t border-[color:var(--line)] pt-3">
+            {user ? (
+              <>
+                <Link
+                  to="/profile"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-[var(--accent)] transition hover:bg-[rgba(31,93,99,0.1)]"
+                >
+                  <UserIcon className="h-4 w-4" />
+                  {user.name}
+                </Link>
+                <Button
+                  variant="destructive"
+                  size="pill"
+                  onClick={handleLogout}
+                >
+                  <ArrowLeftOnRectangleIcon className="h-4 w-4" />
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  onClick={() => setMenuOpen(false)}
+                  className="btn-ghost flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold"
+                >
+                  <ArrowRightOnRectangleIcon className="h-4 w-4" />
+                  Login
+                </Link>
+                <Link
+                  to="/register"
+                  onClick={() => setMenuOpen(false)}
+                  className="btn-main flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold"
+                >
+                  <UserPlusIcon className="h-4 w-4" />
                   Register
                 </Link>
               </>
             )}
           </div>
         </div>
-      </div>
+      )}
     </header>
   );
 };

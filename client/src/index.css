@@ -1,1 +1,420 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
+
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root {
+  --bg-0: #f6f1e7;
+  --bg-1: #f0e5d0;
+  --panel: #fffdf7;
+  --panel-soft: #fff7ea;
+  --text: #222836;
+  --muted: #687385;
+  --line: #dfd4bf;
+  --brand: #bc741b;
+  --brand-strong: #9a5c0f;
+  --accent: #1f5d63;
+  --danger: #b94038;
+}
+
+/* ============================================================
+   BASE RESETS
+   ============================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Manrope", "Segoe UI", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 10% 10%, #fff9ef 0%, transparent 40%),
+    radial-gradient(circle at 90% 0%, #f2e6d1 0%, transparent 35%),
+    linear-gradient(165deg, var(--bg-0), var(--bg-1));
+}
+
+#root {
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: "DM Serif Display", "Times New Roman", serif;
+  letter-spacing: 0.02em;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ============================================================
+   FOCUS ACCESSIBLE
+   ============================================================ */
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+.page-entrance {
+  animation: rise-in 0.45s ease-out;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(5px); }
+}
+
+.animate-bob {
+  animation: bob 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-entrance { animation: none; }
+  .animate-bob   { animation: none; }
+}
+
+/* ============================================================
+   PANELS / SURFACES
+   ============================================================ */
+.panel {
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 1.25rem;
+  box-shadow: 0 2px 8px rgba(34, 40, 54, 0.05), 0 10px 30px rgba(34, 40, 54, 0.08);
+  backdrop-filter: blur(4px);
+}
+
+.panel-soft {
+  background: color-mix(in srgb, var(--panel-soft) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--line) 75%, #fff);
+  border-radius: 1rem;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn-main {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--brand);
+  background: linear-gradient(135deg, var(--brand), var(--brand-strong));
+  color: #fffdf8;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+
+.btn-main:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.07);
+  box-shadow: 0 8px 20px rgba(154, 92, 15, 0.3);
+}
+
+.btn-main:active {
+  transform: translateY(0);
+  filter: brightness(0.97);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--panel) 80%, transparent);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+}
+
+.btn-ghost:hover {
+  border-color: var(--brand);
+  color: var(--brand-strong);
+  background: rgba(188, 116, 27, 0.06);
+}
+
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  background: #fff8f7;
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.btn-danger:hover {
+  background: #fce9e8;
+}
+
+/* ============================================================
+   FORM FIELDS
+   ============================================================ */
+.field {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--line);
+  background: #fffefb;
+  padding: 0.65rem 0.9rem;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.field:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(31, 93, 99, 0.13);
+}
+
+.field::placeholder {
+  color: #9aa3af;
+}
+
+/* Password field wrapper */
+.field-wrap {
+  position: relative;
+}
+
+.field-wrap .field {
+  padding-right: 3rem;
+}
+
+.field-wrap .toggle-pw {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: var(--muted);
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  transition: color 0.18s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.field-wrap .toggle-pw:hover {
+  color: var(--text);
+}
+
+/* Search input wrapper */
+.search-wrap {
+  position: relative;
+  flex: 1;
+}
+
+.search-wrap .search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--muted);
+  width: 1rem;
+  height: 1rem;
+}
+
+.search-wrap input {
+  padding-left: 2.75rem;
+}
+
+/* ============================================================
+   CHIPS / BADGES
+   ============================================================ */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--line);
+  border-radius: 9999px;
+  padding: 0.3rem 0.85rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--panel) 85%, transparent);
+  cursor: pointer;
+  transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+  white-space: nowrap;
+  -webkit-user-select: none;
+  user-select: none;
+  text-decoration: none;
+}
+
+.chip:hover {
+  border-color: var(--brand);
+  color: var(--brand-strong);
+  background: rgba(188, 116, 27, 0.07);
+}
+
+.chip-active {
+  border-color: var(--brand);
+  background: linear-gradient(135deg, rgba(188, 116, 27, 0.14), rgba(154, 92, 15, 0.09));
+  color: var(--brand-strong);
+}
+
+/* Concentration badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0.22rem 0.65rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.badge-extrait {
+  background: linear-gradient(135deg, rgba(188, 116, 27, 0.18), rgba(154, 92, 15, 0.1));
+  color: var(--brand-strong);
+  border: 1px solid rgba(188, 116, 27, 0.28);
+}
+
+.badge-edp {
+  background: rgba(31, 93, 99, 0.1);
+  color: var(--accent);
+  border: 1px solid rgba(31, 93, 99, 0.22);
+}
+
+.badge-edt {
+  background: rgba(104, 115, 133, 0.1);
+  color: var(--muted);
+  border: 1px solid rgba(104, 115, 133, 0.2);
+}
+
+.badge-edc {
+  background: rgba(104, 115, 133, 0.07);
+  color: var(--muted);
+  border: 1px solid rgba(104, 115, 133, 0.15);
+}
+
+.badge-male {
+  background: rgba(37, 99, 235, 0.08);
+  color: #1e40af;
+  border: 1px solid rgba(37, 99, 235, 0.18);
+}
+
+.badge-female {
+  background: rgba(219, 39, 119, 0.08);
+  color: #9d174d;
+  border: 1px solid rgba(219, 39, 119, 0.18);
+}
+
+.badge-unisex {
+  background: rgba(31, 93, 99, 0.09);
+  color: var(--accent);
+  border: 1px solid rgba(31, 93, 99, 0.2);
+}
+
+/* ============================================================
+   TYPOGRAPHY UTILITIES
+   ============================================================ */
+.eyebrow {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--muted);
+}
+
+/* ============================================================
+   CARD UTILITIES
+   ============================================================ */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 36px rgba(34, 40, 54, 0.12);
+}
+
+/* Star ratings */
+.stars-filled { color: #c97a12; }
+.stars-empty  { color: #d1c9b8; }
+
+/* Review card */
+.review-card {
+  background: color-mix(in srgb, var(--panel) 90%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  padding: 1.25rem 1.5rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.review-card:hover {
+  box-shadow: 0 4px 18px rgba(34, 40, 54, 0.07);
+}
+
+/* ============================================================
+   TABLE
+   ============================================================ */
+.table-shell {
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+}
+
+.table-shell thead {
+  background: #f7efe0;
+}
+
+.table-shell tbody tr {
+  border-top: 1px solid #efe5d3;
+}
+
+.table-shell tbody tr:hover {
+  background: #fdf5e9;
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.footer {
+  border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg-1) 75%, transparent);
+  margin-top: 4rem;
+}
+
+/* ============================================================
+   DIVIDER
+   ============================================================ */
+.divider {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 0;
+}

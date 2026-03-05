@@ -1,14 +1,36 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import Swal from "sweetalert2";
 import * as yup from "yup";
 
 import { create, getAll, update, remove } from "../../services/brand.api";
 import { brandSchema } from "../../validates/brand.validate";
+import { PageHeader } from "@/components/admin/PageHeader";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+const fmtDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 
 const BrandManager = () => {
-  const [brands, setBrands] = useState<unknown[]>([]);
+  const [brands, setBrands] = useState<any[]>([]);
   const [brandName, setBrandName] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -55,128 +77,139 @@ const BrandManager = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "This brand will be deleted!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      confirmButtonText: "Yes, delete it!",
-    });
-    if (!result.isConfirmed) return;
     try {
       await remove(id);
       fetchBrands();
       toast.success("Brand deleted successfully");
-    } catch (err: any) {
-      console.log("Error deleting brand: ", err);
+    } catch {
       toast.error("Failed to delete brand");
     }
   };
 
   useEffect(() => {
-    fetchBrands();
+    void (async () => { await fetchBrands(); })();
   }, []);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Brand Management</h1>
-        <button
-          type="button"
-          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
-          onClick={() => setShowForm(!showForm)}
-        >
-          + Add Brand
-        </button>
-      </div>
+    <div className="py-4">
+      <PageHeader
+        title="Brand Management"
+        actions={
+          <Button onClick={() => setShowForm(!showForm)}>
+            {showForm ? "Cancel" : "+ Add Brand"}
+          </Button>
+        }
+      />
 
       {showForm && (
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Brand Name
-          </label>
-          <input
-            type="text"
-            value={brandName}
-            onChange={(e) => setBrandName(e.target.value)}
-            placeholder="e.g. Chanel, Dior, Gucci"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 mb-4"
-          />
-          <button
-            type="button"
-            onClick={handleCreate}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
-          >
-            Save
-          </button>
-        </div>
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <Label htmlFor="brand-name">Brand Name</Label>
+            <Input
+              id="brand-name"
+              value={brandName}
+              onChange={(e) => setBrandName(e.target.value)}
+              placeholder="e.g. Chanel, Dior, Gucci"
+              className="mb-4"
+              onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+            />
+            <Button onClick={handleCreate}>Save</Button>
+          </CardContent>
+        </Card>
       )}
 
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+      <div className="table-shell">
         <table className="w-full">
-          <thead className="bg-gray-50">
+          <thead>
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">
+              <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-(--muted)">
                 Brand Name
               </th>
-              <th className="px-6 py-3 text-right text-sm font-semibold text-gray-600">
+              <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-(--muted)">
+                Created At
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-(--muted)">
+                Updated At
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-bold uppercase tracking-wide text-(--muted)">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody>
             {brands.map((brand: any) => (
-              <tr className="hover:bg-gray-50" key={brand._id}>
+              <tr key={brand._id}>
                 <td className="px-6 py-4">
                   {editingId === brand._id ? (
-                    <input
-                      type="text"
+                    <Input
                       value={editingName}
                       onChange={(e) => setEditingName(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleUpdate(brand._id)}
+                      className="max-w-xs"
                     />
                   ) : (
-                    brand.brandName
+                    <span className="font-semibold">{brand.brandName}</span>
                   )}
                 </td>
-                <td className="px-6 py-4 text-right space-x-2">
+                <td className="px-6 py-4 text-sm text-(--muted)">
+                  {brand.createdAt ? fmtDate(brand.createdAt) : "—"}
+                </td>
+                <td className="px-6 py-4 text-sm text-(--muted)">
+                  {brand.updatedAt ? fmtDate(brand.updatedAt) : "—"}
+                </td>
+                <td className="space-x-2 px-6 py-4 text-right">
                   {editingId === brand._id ? (
                     <>
-                      <button
-                        type="button"
-                        className="px-3 py-1 text-sm bg-green-100 text-green-600 rounded hover:bg-green-200 transition mr-2"
+                      <Button
+                        size="sm"
+                        className="rounded-lg bg-emerald-500 hover:bg-emerald-600"
                         onClick={() => handleUpdate(brand._id)}
                       >
                         Save
-                      </button>
-                      <button
-                        type="button"
-                        className="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition"
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-lg"
                         onClick={() => setEditingId(null)}
                       >
                         Cancel
-                      </button>
+                      </Button>
                     </>
                   ) : (
-                    <span className="text-gray-500"></span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="rounded-lg bg-sky-100 text-sky-700 hover:bg-sky-200 hover:text-sky-800"
+                      onClick={() => {
+                        setEditingId(brand._id);
+                        setEditingName(brand.brandName);
+                      }}
+                    >
+                      Edit
+                    </Button>
                   )}
-                  <button
-                    type="button"
-                    className="px-3 py-1 text-sm bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition"
-                    onClick={() => {
-                      setEditingId(brand._id);
-                      setEditingName(brand.brandName);
-                    }}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    className="px-3 py-1 text-sm bg-red-100 text-red-600 rounded hover:bg-red-200 transition"
-                    onClick={() => handleDelete(brand._id)}
-                  >
-                    Delete
-                  </button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm" className="rounded-lg">
+                        Delete
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete brand?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          <strong>{brand.brandName}</strong> and all its perfumes will be permanently deleted.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDelete(brand._id)}>
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </td>
               </tr>
             ))}

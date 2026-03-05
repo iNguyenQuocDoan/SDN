@@ -1,17 +1,34 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "react-toastify";
-import Swal from "sweetalert2";
 import * as yup from "yup";
 
-import {
-  getAll,
-  create,
-  update,
-  remove,
-} from "../../services/perfume.api";
+import { getAll, create, update, remove } from "../../services/perfume.api";
 import { getAll as getAllBrands } from "../../services/brand.api";
 import { perfumeSchema } from "../../validates/perfume.validate";
+
+import { PageHeader } from "@/components/admin/PageHeader";
+import { DataTableCard } from "@/components/admin/DataTableCard";
+import { AdminPagination } from "@/components/admin/AdminPagination";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const emptyForm = {
   perfumeName: "",
@@ -21,9 +38,28 @@ const emptyForm = {
   description: "",
   ingredients: "",
   volume: 0,
-  targetAudience: "unisex",
+  targetAudience: "male",
   brand: "",
 };
+
+const concentrationVariant: Record<
+  string,
+  "extrait" | "edp" | "edt" | "edc" | "outline"
+> = {
+  Extrait: "extrait",
+  EDP: "edp",
+  EDT: "edt",
+  EDC: "edc",
+};
+
+const audienceVariant: Record<string, "male" | "female"> = {
+  male: "male",
+  female: "female",
+};
+
+const TH =
+  "px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-(--muted)";
+const TD = "px-4 py-3 align-middle";
 
 const PerfumeManager = () => {
   const [perfumes, setPerfumes] = useState<any[]>([]);
@@ -35,22 +71,35 @@ const PerfumeManager = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
+  const [search, setSearch] = useState("");
 
   const fetchPerfumes = async (currentPage = page) => {
-    const res = await getAll({ page: currentPage, limit: 8 });
-    setPerfumes(res.data);
-    setTotalPages(res.pagination.totalPages);
+    setLoading(true);
+    setFetchError(false);
+    try {
+      const res = await getAll({ page: currentPage, limit: 8 });
+      setPerfumes(res.data);
+      setTotalPages(res.pagination.totalPages);
+    } catch {
+      setFetchError(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     setLoading(true);
+    setFetchError(false);
     Promise.all([
       getAll({ page, limit: 8 }).then((res) => {
         setPerfumes(res.data);
         setTotalPages(res.pagination.totalPages);
       }),
       getAllBrands().then((res) => setBrands(res.data)),
-    ]).finally(() => setLoading(false));
+    ])
+      .catch(() => setFetchError(true))
+      .finally(() => setLoading(false));
   }, [page]);
 
   const handleChange = (
@@ -77,13 +126,12 @@ const PerfumeManager = () => {
     try {
       await perfumeSchema.validate(form, { abortEarly: false });
       setErrors({});
-
       if (editingId) {
         await update(editingId, form);
-        toast.success("Perfume updated!");
+        toast.success("Perfume updated");
       } else {
         await create(form);
-        toast.success("Perfume created!");
+        toast.success("Perfume created");
       }
       setForm(emptyForm);
       setShowForm(false);
@@ -92,14 +140,16 @@ const PerfumeManager = () => {
     } catch (err) {
       if (err instanceof yup.ValidationError) {
         const fieldErrors: Record<string, string> = {};
-        err.inner.forEach((e) => {
-          if (e.path && !fieldErrors[e.path]) {
-            fieldErrors[e.path] = e.message;
+        err.inner.forEach((item) => {
+          if (item.path && !fieldErrors[item.path]) {
+            fieldErrors[item.path] = item.message;
           }
         });
         setErrors(fieldErrors);
       } else {
-        toast.error((err as any).response?.data?.message || "Failed to save perfume");
+        toast.error(
+          (err as any).response?.data?.message || "Failed to save perfume",
+        );
       }
     }
   };
@@ -122,329 +172,469 @@ const PerfumeManager = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "This perfume will be deleted!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      confirmButtonText: "Yes, delete it!",
-    });
-    if (!result.isConfirmed) return;
     try {
       await remove(id);
       fetchPerfumes();
-      toast.success("Perfume deleted!");
+      toast.success("Perfume deleted");
     } catch {
       toast.error("Failed to delete perfume");
     }
   };
 
+  const fe = (field: string) => errors[field];
+
+  /* client-side search within the current page */
+  const filtered = perfumes.filter(
+    (p) =>
+      !search ||
+      p.perfumeName?.toLowerCase().includes(search.toLowerCase()) ||
+      p.brand?.brandName?.toLowerCase().includes(search.toLowerCase()),
+  );
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Perfume Management</h1>
-        <button
-          type="button"
-          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
-          onClick={() => {
-            setForm(emptyForm);
-            setEditingId(null);
-            setErrors({});
-            setShowForm(!showForm);
-          }}
-        >
-          {showForm ? "Cancel" : "+ Add Perfume"}
-        </button>
-      </div>
+    <div className="py-4">
+      <PageHeader
+        title="Perfume Management"
+        subtitle={totalPages > 1 ? `Page ${page} of ${totalPages}` : undefined}
+        actions={
+          <Button
+            onClick={() => {
+              setForm(emptyForm);
+              setEditingId(null);
+              setErrors({});
+              setShowForm(!showForm);
+            }}
+          >
+            {showForm ? "Cancel" : "+ Add Perfume"}
+          </Button>
+        }
+      />
 
+      {/* ── Create / Edit form ── */}
       {showForm && (
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">
-            {editingId ? "Edit Perfume" : "Add Perfume"}
-          </h2>
-          <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleSubmit}>
-            {/* Perfume Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Perfume Name
-              </label>
-              <input
-                name="perfumeName"
-                value={form.perfumeName}
-                onChange={handleChange}
-                placeholder="e.g. Chanel No.5"
-                className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${errors.perfumeName ? "border-red-500" : ""}`}
-              />
-              {errors.perfumeName && <p className="text-red-500 text-sm mt-1">{errors.perfumeName}</p>}
-            </div>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg">
+              {editingId ? "Edit Perfume" : "Add Perfume"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form
+              className="grid grid-cols-1 gap-4 md:grid-cols-2"
+              onSubmit={handleSubmit}
+            >
+              <div>
+                <Label htmlFor="pm-name">Perfume Name</Label>
+                <Input
+                  id="pm-name"
+                  name="perfumeName"
+                  value={form.perfumeName}
+                  onChange={handleChange}
+                  placeholder="e.g. Chanel No.5"
+                  error={!!fe("perfumeName")}
+                />
+                {fe("perfumeName") && (
+                  <p className="mt-1 text-xs font-semibold text-(--danger)">
+                    {fe("perfumeName")}
+                  </p>
+                )}
+              </div>
 
-            {/* Image URL + Preview */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Image URL
-              </label>
-              <input
-                name="uri"
-                value={form.uri}
-                onChange={handleChange}
-                placeholder="e.g. https://example.com/image.jpg"
-                className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${errors.uri ? "border-red-500" : ""}`}
-              />
-              {errors.uri && <p className="text-red-500 text-sm mt-1">{errors.uri}</p>}
-              {form.uri && (
-                <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden w-32 h-32 bg-gray-100">
-                  <img
-                    src={form.uri}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                    onLoad={(e) => {
-                      (e.target as HTMLImageElement).style.display = "block";
-                    }}
-                  />
-                </div>
-              )}
-            </div>
+              <div>
+                <Label htmlFor="pm-uri">Image URL</Label>
+                <Input
+                  id="pm-uri"
+                  name="uri"
+                  value={form.uri}
+                  onChange={handleChange}
+                  placeholder="https://example.com/image.jpg"
+                  error={!!fe("uri")}
+                />
+                {fe("uri") && (
+                  <p className="mt-1 text-xs font-semibold text-(--danger)">
+                    {fe("uri")}
+                  </p>
+                )}
+                {form.uri && (
+                  <div className="mt-2 h-28 w-28 overflow-hidden rounded-xl border border-(--line) bg-[rgba(104,115,133,0.1)]">
+                    <img
+                      src={form.uri}
+                      alt="Preview"
+                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                      onLoad={(e) => {
+                        (e.target as HTMLImageElement).style.display = "block";
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
 
-            {/* Price */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Price ($)
-              </label>
-              <input
-                name="price"
-                type="number"
-                value={form.price}
-                onChange={handleChange}
-                placeholder="e.g. 120"
-                className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${errors.price ? "border-red-500" : ""}`}
-              />
-              {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
-            </div>
+              <div>
+                <Label htmlFor="pm-price">Price ($)</Label>
+                <Input
+                  id="pm-price"
+                  name="price"
+                  type="number"
+                  value={form.price}
+                  onChange={handleChange}
+                  error={!!fe("price")}
+                />
+                {fe("price") && (
+                  <p className="mt-1 text-xs font-semibold text-(--danger)">
+                    {fe("price")}
+                  </p>
+                )}
+              </div>
 
-            {/* Volume */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Volume (ml)
-              </label>
-              <input
-                name="volume"
-                type="number"
-                value={form.volume}
-                onChange={handleChange}
-                placeholder="e.g. 100"
-                className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${errors.volume ? "border-red-500" : ""}`}
-              />
-              {errors.volume && <p className="text-red-500 text-sm mt-1">{errors.volume}</p>}
-            </div>
+              <div>
+                <Label htmlFor="pm-volume">Volume (ml)</Label>
+                <Input
+                  id="pm-volume"
+                  name="volume"
+                  type="number"
+                  value={form.volume}
+                  onChange={handleChange}
+                  error={!!fe("volume")}
+                />
+                {fe("volume") && (
+                  <p className="mt-1 text-xs font-semibold text-(--danger)">
+                    {fe("volume")}
+                  </p>
+                )}
+              </div>
 
-            {/* Concentration */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Concentration
-              </label>
-              <select
-                title="Concentration"
-                name="concentration"
-                value={form.concentration}
-                onChange={handleChange}
-                className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${errors.concentration ? "border-red-500" : ""}`}
-              >
-                <option value="Extrait">Extrait</option>
-                <option value="EDP">EDP</option>
-                <option value="EDT">EDT</option>
-                <option value="EDC">EDC</option>
-                <option value="Eau Fraiche">Eau Fraiche</option>
-              </select>
-              {errors.concentration && <p className="text-red-500 text-sm mt-1">{errors.concentration}</p>}
-            </div>
+              <div>
+                <Label htmlFor="pm-concentration">Concentration</Label>
+                <Select
+                  id="pm-concentration"
+                  title="Concentration"
+                  name="concentration"
+                  value={form.concentration}
+                  onChange={handleChange}
+                  error={!!fe("concentration")}
+                >
+                  <option value="Extrait">Extrait</option>
+                  <option value="EDP">EDP</option>
+                  <option value="EDT">EDT</option>
+                  <option value="EDC">EDC</option>
+                  <option value="Eau Fraiche">Eau Fraiche</option>
+                </Select>
+                {fe("concentration") && (
+                  <p className="mt-1 text-xs font-semibold text-(--danger)">
+                    {fe("concentration")}
+                  </p>
+                )}
+              </div>
 
-            {/* Target Audience */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Target Audience
-              </label>
-              <select
-                title="Target Audience"
-                name="targetAudience"
-                value={form.targetAudience}
-                onChange={handleChange}
-                className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${errors.targetAudience ? "border-red-500" : ""}`}
-              >
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="unisex">Unisex</option>
-              </select>
-              {errors.targetAudience && <p className="text-red-500 text-sm mt-1">{errors.targetAudience}</p>}
-            </div>
+              <div>
+                <Label htmlFor="pm-audience">Target Audience</Label>
+                <Select
+                  id="pm-audience"
+                  title="Target Audience"
+                  name="targetAudience"
+                  value={form.targetAudience}
+                  onChange={handleChange}
+                  error={!!fe("targetAudience")}
+                >
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </Select>
+                {fe("targetAudience") && (
+                  <p className="mt-1 text-xs font-semibold text-(--danger)">
+                    {fe("targetAudience")}
+                  </p>
+                )}
+              </div>
 
-            {/* Brand */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Brand
-              </label>
-              <select
-                title="Brand"
-                name="brand"
-                value={form.brand}
-                onChange={handleChange}
-                className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${errors.brand ? "border-red-500" : ""}`}
-              >
-                <option value="">-- Select Brand --</option>
-                {brands.map((brand: any) => (
-                  <option key={brand._id} value={brand._id}>
-                    {brand.brandName}
-                  </option>
-                ))}
-              </select>
-              {errors.brand && <p className="text-red-500 text-sm mt-1">{errors.brand}</p>}
-            </div>
+              <div>
+                <Label htmlFor="pm-brand">Brand</Label>
+                <Select
+                  id="pm-brand"
+                  title="Brand"
+                  name="brand"
+                  value={form.brand}
+                  onChange={handleChange}
+                  error={!!fe("brand")}
+                >
+                  <option value="">-- Select Brand --</option>
+                  {brands.map((brand: any) => (
+                    <option key={brand._id} value={brand._id}>
+                      {brand.brandName}
+                    </option>
+                  ))}
+                </Select>
+                {fe("brand") && (
+                  <p className="mt-1 text-xs font-semibold text-(--danger)">
+                    {fe("brand")}
+                  </p>
+                )}
+              </div>
 
-            {/* Ingredients */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Ingredients
-              </label>
-              <input
-                name="ingredients"
-                value={form.ingredients}
-                onChange={handleChange}
-                placeholder="e.g. Aldehydes, Ylang-Ylang, Jasmine"
-                className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${errors.ingredients ? "border-red-500" : ""}`}
-              />
-              {errors.ingredients && <p className="text-red-500 text-sm mt-1">{errors.ingredients}</p>}
-            </div>
+              <div>
+                <Label htmlFor="pm-ingredients">Ingredients</Label>
+                <Input
+                  id="pm-ingredients"
+                  name="ingredients"
+                  value={form.ingredients}
+                  onChange={handleChange}
+                  placeholder="e.g. Jasmine, Cedarwood"
+                  error={!!fe("ingredients")}
+                />
+                {fe("ingredients") && (
+                  <p className="mt-1 text-xs font-semibold text-(--danger)">
+                    {fe("ingredients")}
+                  </p>
+                )}
+              </div>
 
-            {/* Description */}
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description
-              </label>
-              <textarea
-                name="description"
-                value={form.description}
-                onChange={handleChange}
-                placeholder="e.g. A timeless fragrance with floral and powdery notes"
-                rows={3}
-                className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${errors.description ? "border-red-500" : ""}`}
-              />
-              {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
-            </div>
+              <div className="md:col-span-2">
+                <Label htmlFor="pm-description">Description</Label>
+                <Textarea
+                  id="pm-description"
+                  name="description"
+                  value={form.description}
+                  onChange={handleChange}
+                  rows={3}
+                  error={!!fe("description")}
+                />
+                {fe("description") && (
+                  <p className="mt-1 text-xs font-semibold text-(--danger)">
+                    {fe("description")}
+                  </p>
+                )}
+              </div>
 
-            <div className="md:col-span-2">
-              <button
-                type="submit"
-                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
-              >
-                {editingId ? "Update" : "Create"}
-              </button>
-            </div>
-          </form>
-        </div>
+              <div className="md:col-span-2">
+                <Button type="submit" size="lg">
+                  {editingId ? "Update" : "Create"}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       )}
 
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50">
+      {/* ── Data table ── */}
+      <DataTableCard
+        toolbar={
+          <div className="flex items-center gap-3">
+            <Input
+              placeholder="Search by name or brand…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-8 max-w-xs text-sm"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="text-xs text-(--muted) hover:text-(--text)"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        }
+        footer={
+          <AdminPagination
+            page={page}
+            totalPages={totalPages}
+            onChange={(p) => {
+              setPage(p);
+              setSearch("");
+            }}
+          />
+        }
+      >
+        <table className="w-full min-w-205">
+          <thead>
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Image</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Name</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Brand</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Price</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Volume</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Concentration</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Target</th>
-              <th className="px-6 py-3 text-right text-sm font-semibold text-gray-600">Actions</th>
+              <th className={`${TH} w-15`}>
+                Image
+              </th>
+              <th className={TH}>Name</th>
+              <th className={TH}>Brand</th>
+              <th className={`${TH} text-right`}>Price</th>
+              <th className={`${TH} text-right`}>Volume</th>
+              <th className={TH}>Concentration</th>
+              <th className={TH}>Target</th>
+              <th className={`${TH} text-right`}>Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
-            {loading && Array.from({ length: 5 }).map((_, i) => (
-              <tr key={i} className="animate-pulse">
-                <td className="px-6 py-4"><div className="w-12 h-12 bg-gray-200 rounded" /></td>
-                <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-24" /></td>
-                <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-20" /></td>
-                <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-14" /></td>
-                <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-12" /></td>
-                <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-16" /></td>
-                <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-14" /></td>
-                <td className="px-6 py-4 text-right"><div className="h-6 bg-gray-200 rounded w-24 ml-auto" /></td>
+          <tbody>
+            {/* Loading skeleton */}
+            {loading &&
+              Array.from({ length: 6 }).map((_, i) => (
+                <tr key={i} className="animate-pulse">
+                  <td className={TD}>
+                    <div className="h-11 w-11 rounded-lg bg-[#efe5d3]" />
+                  </td>
+                  <td className={TD}>
+                    <div className="h-4 w-36 rounded bg-[#efe5d3]" />
+                  </td>
+                  <td className={TD}>
+                    <div className="h-4 w-24 rounded bg-[#efe5d3]" />
+                  </td>
+                  <td className={TD}>
+                    <div className="ml-auto h-4 w-14 rounded bg-[#efe5d3]" />
+                  </td>
+                  <td className={TD}>
+                    <div className="ml-auto h-4 w-12 rounded bg-[#efe5d3]" />
+                  </td>
+                  <td className={TD}>
+                    <div className="h-5 w-16 rounded-full bg-[#efe5d3]" />
+                  </td>
+                  <td className={TD}>
+                    <div className="h-5 w-14 rounded-full bg-[#efe5d3]" />
+                  </td>
+                  <td className={TD}>
+                    <div className="ml-auto h-7 w-28 rounded-lg bg-[#efe5d3]" />
+                  </td>
+                </tr>
+              ))}
+
+            {/* Error state */}
+            {!loading && fetchError && (
+              <tr>
+                <td colSpan={8} className="px-4 py-16 text-center">
+                  <p className="text-sm font-semibold text-(--danger)">
+                    Failed to load perfumes.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-3"
+                    onClick={() => fetchPerfumes(page)}
+                  >
+                    Retry
+                  </Button>
+                </td>
               </tr>
-            ))}
-            {!loading && perfumes.map((perfume: any) => (
-              <tr className="hover:bg-gray-50" key={perfume._id}>
-                <td className="px-6 py-4">
-                  {perfume.uri ? (
-                    <img src={perfume.uri} alt={perfume.perfumeName} className="w-12 h-12 object-cover rounded" />
+            )}
+
+            {/* Empty state */}
+            {!loading && !fetchError && filtered.length === 0 && (
+              <tr>
+                <td colSpan={8} className="px-4 py-16 text-center">
+                  {search ? (
+                    <p className="text-sm text-(--muted)">
+                      No perfumes match &ldquo;{search}&rdquo;
+                    </p>
                   ) : (
-                    <span className="text-gray-400 text-xs">No image</span>
+                    <>
+                      <p className="text-sm font-semibold text-(--muted)">
+                        No perfumes yet.
+                      </p>
+                      <Button
+                        size="sm"
+                        className="mt-3"
+                        onClick={() => {
+                          setForm(emptyForm);
+                          setEditingId(null);
+                          setErrors({});
+                          setShowForm(true);
+                        }}
+                      >
+                        + Add Perfume
+                      </Button>
+                    </>
                   )}
                 </td>
-                <td className="px-6 py-4 font-medium">{perfume.perfumeName}</td>
-                <td className="px-6 py-4 text-gray-500">{perfume.brand?.brandName}</td>
-                <td className="px-6 py-4 text-purple-600 font-semibold">${perfume.price}</td>
-                <td className="px-6 py-4 text-gray-500">{perfume.volume}ml</td>
-                <td className="px-6 py-4 text-gray-500">{perfume.concentration}</td>
-                <td className="px-6 py-4 text-gray-500">{perfume.targetAudience}</td>
-                <td className="px-6 py-4 text-right space-x-2">
-                  <button
-                    type="button"
-                    className="px-3 py-1 text-sm bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition"
-                    onClick={() => handleEdit(perfume)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    className="px-3 py-1 text-sm bg-red-100 text-red-600 rounded hover:bg-red-200 transition"
-                    onClick={() => handleDelete(perfume._id)}
-                  >
-                    Delete
-                  </button>
-                </td>
               </tr>
-            ))}
+            )}
+
+            {/* Data rows */}
+            {!loading &&
+              !fetchError &&
+              filtered.map((perfume: any) => (
+                <tr key={perfume._id}>
+                  <td className={TD}>
+                    {perfume.uri ? (
+                      <img
+                        src={perfume.uri}
+                        alt={perfume.perfumeName}
+                        className="h-11 w-11 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#f7efe0] text-xs text-(--muted)">
+                        —
+                      </div>
+                    )}
+                  </td>
+                  <td className={`${TD} font-semibold`}>
+                    {perfume.perfumeName}
+                  </td>
+                  <td className={`${TD} text-(--muted)`}>
+                    {perfume.brand?.brandName ?? "—"}
+                  </td>
+                  <td className={`${TD} text-right font-semibold text-(--brand-strong)`}>
+                    ${perfume.price}
+                  </td>
+                  <td className={`${TD} text-right text-(--muted)`}>
+                    {perfume.volume}ml
+                  </td>
+                  <td className={TD}>
+                    <Badge
+                      variant={
+                        concentrationVariant[perfume.concentration] ?? "outline"
+                      }
+                    >
+                      {perfume.concentration}
+                    </Badge>
+                  </td>
+                  <td className={TD}>
+                    <Badge
+                      variant={
+                        audienceVariant[perfume.targetAudience] ?? "outline"
+                      }
+                    >
+                      {perfume.targetAudience}
+                    </Badge>
+                  </td>
+                  <td className={`${TD} text-right`}>
+                    <div className="flex items-center justify-end gap-1.5">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="bg-sky-100 text-sky-700 hover:bg-sky-200 hover:text-sky-800"
+                        onClick={() => handleEdit(perfume)}
+                      >
+                        Edit
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" size="sm">
+                            Delete
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete perfume?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              <strong>{perfume.perfumeName}</strong> will be
+                              permanently removed. This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDelete(perfume._id)}
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
-      </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2 mt-6">
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Previous
-          </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => setPage(p)}
-              className={`px-4 py-2 rounded-lg transition ${
-                p === page
-                  ? "bg-purple-600 text-white"
-                  : "border border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              {p}
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Next
-          </button>
-        </div>
-      )}
+      </DataTableCard>
     </div>
   );
 };

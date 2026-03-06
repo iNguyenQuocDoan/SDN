@@ -16,6 +16,11 @@ const Profile = () => {
 
   const handleUpdateProfile = async (e: FormEvent) => {
     e.preventDefault();
+    if (!name.trim()) { toast.error("Name cannot be empty"); return; }
+    const year = Number(YOB);
+    if (!Number.isInteger(year) || year < 1900 || year > new Date().getFullYear()) {
+      toast.error("Year of birth is invalid"); return;
+    }
     try {
       const res = await updateProfile({ name, YOB, gender });
       setUser(res.data);
@@ -27,6 +32,12 @@ const Profile = () => {
 
   const handleChangePassword = async (e: FormEvent) => {
     e.preventDefault();
+    if (!oldPassword) { toast.error("Current password is required"); return; }
+    if (newPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+    if (!/[A-Z]/.test(newPassword)) { toast.error("Password must contain an uppercase letter"); return; }
+    if (!/[a-z]/.test(newPassword)) { toast.error("Password must contain a lowercase letter"); return; }
+    if (!/[0-9]/.test(newPassword)) { toast.error("Password must contain a number"); return; }
+    if (!/[!@#$%^&*]/.test(newPassword)) { toast.error("Password must contain a special character (!@#$%^&*)"); return; }
     try {
       await changePassword({ oldPassword, newPassword });
       toast.success("Password changed");

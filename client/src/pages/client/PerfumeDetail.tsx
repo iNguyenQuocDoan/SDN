@@ -93,6 +93,7 @@ const PerfumeDetail = () => {
 
   const handleSubmitComment = async (e: FormEvent) => {
     e.preventDefault();
+    if (!content.trim()) { toast.error("Review content cannot be empty"); return; }
     try {
       await addComment(id as string, { rating, content });
       toast.success("Review submitted");

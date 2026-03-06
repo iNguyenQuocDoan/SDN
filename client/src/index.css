@@ -5,6 +5,7 @@
    DESIGN TOKENS
    ============================================================ */
 :root {
+  /* Colour palette */
   --bg-0: #f6f1e7;
   --bg-1: #f0e5d0;
   --panel: #fffdf7;
@@ -16,6 +17,16 @@
   --brand-strong: #9a5c0f;
   --accent: #1f5d63;
   --danger: #b94038;
+
+  /* Typography scale */
+  --font-display: "DM Serif Display", "Times New Roman", serif;
+  --font-body:    "Manrope", "Segoe UI", sans-serif;
+
+  --text-xs:   0.70rem;   /* eyebrow, badges */
+  --text-sm:   0.825rem;  /* secondary labels */
+  --text-base: 0.9rem;    /* form fields, body */
+  --text-md:   1rem;      /* card titles */
+  --text-lg:   1.05rem;   /* card prices */
 }
 
 /* ============================================================
@@ -34,7 +45,8 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: "Manrope", "Segoe UI", sans-serif;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
   color: var(--text);
   background:
     radial-gradient(circle at 10% 10%, #fff9ef 0%, transparent 40%),
@@ -50,7 +62,7 @@ h1,
 h2,
 h3,
 .font-display {
-  font-family: "DM Serif Display", "Times New Roman", serif;
+  font-family: var(--font-display);
   letter-spacing: 0.02em;
 }
 
@@ -93,6 +105,19 @@ a {
 
 .animate-bob {
   animation: bob 2s ease-in-out infinite;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 28s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -184,8 +209,8 @@ a {
   background: #fffefb;
   padding: 0.65rem 0.9rem;
   color: var(--text);
-  font-family: inherit;
-  font-size: 0.9rem;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -298,9 +323,12 @@ a {
 }
 
 .badge-extrait {
-  background: linear-gradient(135deg, rgba(188, 116, 27, 0.18), rgba(154, 92, 15, 0.1));
-  color: var(--brand-strong);
-  border: 1px solid rgba(188, 116, 27, 0.28);
+  background: linear-gradient(135deg, rgba(188, 116, 27, 0.92), rgba(154, 92, 15, 0.88));
+  color: #fff8ee;
+  border: 1px solid rgba(188, 116, 27, 0.6);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-shadow: 0 1px 2px rgba(90, 50, 0, 0.25);
 }
 
 .badge-edp {
@@ -343,7 +371,7 @@ a {
    TYPOGRAPHY UTILITIES
    ============================================================ */
 .eyebrow {
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.22em;

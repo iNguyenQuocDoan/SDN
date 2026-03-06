@@ -87,13 +87,16 @@ const BrandManager = () => {
   };
 
   useEffect(() => {
-    void (async () => { await fetchBrands(); })();
+    void (async () => {
+      await fetchBrands();
+    })();
   }, []);
 
   return (
     <div className="py-4">
       <PageHeader
         title="Brand Management"
+        subtitle="All brands "
         actions={
           <Button onClick={() => setShowForm(!showForm)}>
             {showForm ? "Cancel" : "+ Add Brand"}
@@ -144,7 +147,9 @@ const BrandManager = () => {
                     <Input
                       value={editingName}
                       onChange={(e) => setEditingName(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleUpdate(brand._id)}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && handleUpdate(brand._id)
+                      }
                       className="max-w-xs"
                     />
                   ) : (
@@ -191,7 +196,11 @@ const BrandManager = () => {
                   )}
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm" className="rounded-lg">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="rounded-lg"
+                      >
                         Delete
                       </Button>
                     </AlertDialogTrigger>
@@ -199,12 +208,15 @@ const BrandManager = () => {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete brand?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          <strong>{brand.brandName}</strong> and all its perfumes will be permanently deleted.
+                          <strong>{brand.brandName}</strong> and all its
+                          perfumes will be permanently deleted.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDelete(brand._id)}>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(brand._id)}
+                        >
                           Delete
                         </AlertDialogAction>
                       </AlertDialogFooter>

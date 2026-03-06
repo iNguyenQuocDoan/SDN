@@ -418,7 +418,7 @@ const PerfumeManager = () => {
       )}
 
       {/* ── Data table ── */}
-      <DataTableCard
+      {!showForm && <DataTableCard
         toolbar={
           <div className="flex items-center gap-3">
             <Input
@@ -634,7 +634,7 @@ const PerfumeManager = () => {
               ))}
           </tbody>
         </table>
-      </DataTableCard>
+      </DataTableCard>}
     </div>
   );
 };

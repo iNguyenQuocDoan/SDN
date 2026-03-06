@@ -21,7 +21,7 @@ import { ScrollToTop } from "./components/ScrollToTop";
 function App() {
   return (
     <>
-      <ToastContainer position="top-right" autoClose={3000} />
+      <ToastContainer position="top-right" autoClose={1000} />
       <AuthProvider>
         <BrowserRouter>
           <ScrollToTop />

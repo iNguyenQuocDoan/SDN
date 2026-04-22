@@ -120,9 +120,27 @@ a {
   animation-play-state: paused;
 }
 
+/* Card stagger entrance */
+.card-enter {
+  animation: card-in 0.35s ease-out both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .page-entrance { animation: none; }
   .animate-bob   { animation: none; }
+  .card-enter    { animation: none; }
 }
 
 /* ============================================================

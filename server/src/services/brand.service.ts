@@ -4,7 +4,23 @@ import { HTTP_STATUS } from "../constants/httpStatus";
 import { BRAND_MESSAGES } from "../constants/messages";
 
 const getAll = async () => {
-  const brands = await Brand.find({}).sort({ createdAt: -1 });
+  const brands = await Brand.aggregate([
+    { $sort: { createdAt: -1 } },
+    {
+      $lookup: {
+        from: "perfumes",
+        localField: "_id",
+        foreignField: "brand",
+        as: "_perfumes",
+      },
+    },
+    {
+      $addFields: {
+        perfumeCount: { $size: "$_perfumes" },
+      },
+    },
+    { $project: { _perfumes: 0 } },
+  ]);
   return {
     status: HTTP_STATUS.OK,
     data: brands,

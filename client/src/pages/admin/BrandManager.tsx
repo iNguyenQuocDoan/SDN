@@ -32,9 +32,11 @@ const fmtDate = (iso: string) =>
 const BrandManager = () => {
   const [brands, setBrands] = useState<any[]>([]);
   const [brandName, setBrandName] = useState("");
+  const [createError, setCreateError] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [editError, setEditError] = useState("");
 
   const fetchBrands = async () => {
     const res = await getAll();
@@ -44,6 +46,7 @@ const BrandManager = () => {
   const handleCreate = async () => {
     try {
       await brandSchema.validate({ brandName });
+      setCreateError("");
       await create({ brandName });
       setBrandName("");
       setShowForm(false);
@@ -51,7 +54,7 @@ const BrandManager = () => {
       toast.success("Brand created successfully!");
     } catch (err) {
       if (err instanceof yup.ValidationError) {
-        toast.error(err.message);
+        setCreateError(err.message);
       } else {
         toast.error("Failed to create brand. Please try again.");
       }
@@ -62,6 +65,7 @@ const BrandManager = () => {
     if (!editingId) return;
     try {
       await brandSchema.validate({ brandName: editingName });
+      setEditError("");
       await update(id, { brandName: editingName });
       setEditingId(null);
       setEditingName("");
@@ -69,7 +73,7 @@ const BrandManager = () => {
       toast.success("Brand updated successfully");
     } catch (err) {
       if (err instanceof yup.ValidationError) {
-        toast.error(err.message);
+        setEditError(err.message);
       } else {
         toast.error("Failed to update brand");
       }
@@ -111,12 +115,16 @@ const BrandManager = () => {
             <Input
               id="brand-name"
               value={brandName}
-              onChange={(e) => setBrandName(e.target.value)}
+              onChange={(e) => { setBrandName(e.target.value); setCreateError(""); }}
               placeholder="e.g. Chanel, Dior, Gucci"
-              className="mb-4"
+              className="mb-1"
+              error={!!createError}
               onKeyDown={(e) => e.key === "Enter" && handleCreate()}
             />
-            <Button onClick={handleCreate}>Save</Button>
+            {createError && <p className="mb-3 mt-1 text-xs font-semibold text-(--danger)">{createError}</p>}
+            <div className={createError ? "" : "mt-4"}>
+              <Button onClick={handleCreate}>Save</Button>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -127,6 +135,9 @@ const BrandManager = () => {
             <tr>
               <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-(--muted)">
                 Brand Name
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-(--muted)">
+                Products
               </th>
               <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-(--muted)">
                 Created At
@@ -144,17 +155,26 @@ const BrandManager = () => {
               <tr key={brand._id}>
                 <td className="px-6 py-4">
                   {editingId === brand._id ? (
+                    <div>
                     <Input
                       value={editingName}
-                      onChange={(e) => setEditingName(e.target.value)}
+                      onChange={(e) => { setEditingName(e.target.value); setEditError(""); }}
                       onKeyDown={(e) =>
                         e.key === "Enter" && handleUpdate(brand._id)
                       }
                       className="max-w-xs"
+                      error={!!editError}
                     />
+                    {editError && <p className="mt-1 text-xs font-semibold text-(--danger)">{editError}</p>}
+                    </div>
                   ) : (
                     <span className="font-semibold">{brand.brandName}</span>
                   )}
+                </td>
+                <td className="px-6 py-4 text-sm">
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${brand.perfumeCount > 0 ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"}`}>
+                    {brand.perfumeCount ?? 0}
+                  </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-(--muted)">
                   {brand.createdAt ? fmtDate(brand.createdAt) : "—"}
@@ -207,9 +227,22 @@ const BrandManager = () => {
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete brand?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          <strong>{brand.brandName}</strong> and all its
-                          perfumes will be permanently deleted.
+                        <AlertDialogDescription asChild>
+                          <div>
+                            {brand.perfumeCount > 0 ? (
+                              <>
+                                Brand <strong>{brand.brandName}</strong> currently has{" "}
+                                <strong>{brand.perfumeCount} product{brand.perfumeCount > 1 ? "s" : ""}</strong>.
+                                Deleting this brand will permanently remove all associated perfumes.
+                                Do you want to proceed?
+                              </>
+                            ) : (
+                              <>
+                                Are you sure you want to permanently delete brand{" "}
+                                <strong>{brand.brandName}</strong>?
+                              </>
+                            )}
+                          </div>
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>

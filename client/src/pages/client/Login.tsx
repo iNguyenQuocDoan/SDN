@@ -29,6 +29,7 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const { setUser } = useAuth();
   const navigate = useNavigate();
 
@@ -50,8 +51,9 @@ const Login = () => {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setErrors({});
     try {
-      await loginSchema.validate({ email, password });
+      await loginSchema.validate({ email, password }, { abortEarly: false });
       const res = await login({ email, password });
       setUser(res.data);
       toast.success("Login success");
@@ -62,7 +64,11 @@ const Login = () => {
       }
     } catch (err) {
       if (err instanceof yup.ValidationError) {
-        toast.error(err.message);
+        const fieldErrors: Record<string, string> = {};
+        err.inner.forEach((item) => {
+          if (item.path && !fieldErrors[item.path]) fieldErrors[item.path] = item.message;
+        });
+        setErrors(fieldErrors);
       } else {
         toast.error("Invalid email or password");
       }
@@ -93,9 +99,11 @@ const Login = () => {
                 type="email"
                 placeholder="you@example.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); setErrors((p) => { const n = {...p}; delete n.email; return n; }); }}
                 autoComplete="email"
+                error={!!errors.email}
               />
+              {errors.email && <p className="mt-1 text-xs font-semibold text-(--danger)">{errors.email}</p>}
             </div>
 
             {/* Password */}
@@ -107,8 +115,9 @@ const Login = () => {
                   type={showPw ? "text" : "password"}
                   placeholder="Enter your password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => { setPassword(e.target.value); setErrors((p) => { const n = {...p}; delete n.password; return n; }); }}
                   autoComplete="current-password"
+                  error={!!errors.password}
                 />
                 <button
                   type="button"
@@ -121,6 +130,7 @@ const Login = () => {
                     : <EyeIcon className="h-4.5 w-4.5" />}
                 </button>
               </div>
+              {errors.password && <p className="mt-1 text-xs font-semibold text-(--danger)">{errors.password}</p>}
             </div>
 
             <Button type="submit" className="w-full py-3 uppercase tracking-wide">

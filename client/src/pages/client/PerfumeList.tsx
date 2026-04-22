@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 
-import { MagnifyingGlassIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import { MagnifyingGlassIcon, ChevronLeftIcon, ChevronRightIcon, PhotoIcon, FaceFrownIcon } from "@heroicons/react/24/outline";
 import { StarIcon as StarSolid } from "@heroicons/react/24/solid";
 import { Button } from "@/components/ui/button";
 
@@ -52,16 +52,17 @@ const PerfumeList = () => {
   const [perfumes, setPerfumes] = useState<any[]>([]);
   const [brands, setBrands] = useState<any[]>([]);
   const [search, setSearch] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
   const [brandFilter, setBrandFilter] = useState(() => searchParams.get("brand") ?? "");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
 
-  const fetchPerfumes = async (currentPage = page) => {
+  const fetchPerfumes = async (currentPage = page, searchOverride = appliedSearch) => {
     setLoading(true);
     try {
       const query: any = { page: currentPage, limit: 8 };
-      if (search) query.search = search;
+      if (searchOverride) query.search = searchOverride;
       if (brandFilter) query.brand = brandFilter;
 
       const res = await getAll(query);
@@ -80,18 +81,24 @@ const PerfumeList = () => {
     getAllBrands().then((res) => setBrands(res.data));
   }, []);
 
+  // Debounce: auto-apply search 400ms after user stops typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setAppliedSearch(search);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   useEffect(() => {
     fetchPerfumes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, brandFilter]);
+  }, [page, brandFilter, appliedSearch]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (page === 1) {
-      fetchPerfumes(1);
-    } else {
-      setPage(1);
-    }
+    setAppliedSearch(search);
+    if (page !== 1) setPage(1);
   };
 
   const handleBrandChange = (brandId: string) => {
@@ -101,11 +108,18 @@ const PerfumeList = () => {
 
   const clearFilters = () => {
     setSearch("");
+    setAppliedSearch("");
     setBrandFilter("");
     setPage(1);
   };
 
-  const hasFilters = !!(search || brandFilter);
+  const clearSearch = () => {
+    setSearch("");
+    setAppliedSearch("");
+    if (page !== 1) setPage(1);
+  };
+
+  const hasFilters = !!(appliedSearch || brandFilter);
 
   return (
     <div className="mx-auto max-w-7xl space-y-5 px-4 pt-4 pb-8 sm:px-6 sm:pt-5">
@@ -169,13 +183,13 @@ const PerfumeList = () => {
           <div className="overflow-hidden">
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <span className="eyebrow">Active filters:</span>
-              {search && (
+              {appliedSearch && (
                 <span className="chip chip-active">
-                  &ldquo;{search}&rdquo;
+                  &ldquo;{appliedSearch}&rdquo;
                   <button
                     type="button"
                     aria-label="Remove search filter"
-                    onClick={() => setSearch("")}
+                    onClick={clearSearch}
                     className="ml-0.5 opacity-70 hover:opacity-100"
                   >
                     ×
@@ -195,7 +209,7 @@ const PerfumeList = () => {
                   </button>
                 </span>
               )}
-              {search && brandFilter && (
+              {appliedSearch && brandFilter && (
                 <button
                   type="button"
                   onClick={clearFilters}
@@ -210,16 +224,17 @@ const PerfumeList = () => {
       </section>
 
       {/* ── PRODUCT GRID ─────────────────────────────────────── */}
-      <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <section key={`${appliedSearch}-${brandFilter}-${page}`} className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {loading
           ? Array.from({ length: 8 }).map((_, i) => <CardSkeleton key={i} />)
-          : perfumes.map((perfume: any) => {
+          : perfumes.map((perfume: any, i: number) => {
               const rating = avgRating(perfume.comments);
               return (
                 <Link
                   key={perfume._id}
                   to={`/perfumes/${perfume._id}`}
-                  className="panel-soft card-hover group flex flex-col overflow-hidden"
+                  className="panel-soft card-hover group flex flex-col overflow-hidden card-enter"
+                  style={{ "--i": i } as React.CSSProperties}
                 >
                   {/* Image */}
                   <div className="relative h-52 overflow-hidden bg-[rgba(104,115,133,0.09)]">
@@ -231,10 +246,7 @@ const PerfumeList = () => {
                       />
                     ) : (
                       <div className="flex h-full flex-col items-center justify-center gap-2 text-(--muted)">
-                        <svg width="36" height="50" viewBox="0 0 40 56" fill="none" className="opacity-25" aria-hidden="true">
-                          <rect x="14" y="0" width="12" height="8" rx="2" fill="currentColor" />
-                          <path d="M8 12 Q4 16 4 24 L4 48 Q4 52 8 52 L32 52 Q36 52 36 48 L36 24 Q36 16 32 12 Z" fill="currentColor" opacity="0.6" />
-                        </svg>
+                        <PhotoIcon className="h-10 w-10 opacity-25" aria-hidden="true" />
                         <span className="text-xs font-medium">No image</span>
                       </div>
                     )}
@@ -281,35 +293,7 @@ const PerfumeList = () => {
       {/* ── EMPTY STATE ───────────────────────────────────────── */}
       {!loading && perfumes.length === 0 && (
         <div className="panel-soft flex flex-col items-center gap-4 rounded-2xl py-16 text-center">
-          <svg
-            width="48"
-            height="48"
-            viewBox="0 0 48 48"
-            fill="none"
-            className="opacity-25 text-(--muted)"
-            aria-hidden="true"
-          >
-            <circle
-              cx="21"
-              cy="21"
-              r="14"
-              stroke="currentColor"
-              strokeWidth="2.5"
-            />
-            <path
-              d="m32 32 8 8"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-            />
-            <path
-              d="M15 21h12M21 15v12"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              opacity="0.5"
-            />
-          </svg>
+          <FaceFrownIcon className="h-12 w-12 opacity-25 text-(--muted)" aria-hidden="true" />
           <div>
             <p className="font-display text-xl text-(--text)">
               No results found

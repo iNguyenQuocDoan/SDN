@@ -17,6 +17,7 @@ export interface IPerfume extends Document {
   targetAudience: string;
   brand: Types.ObjectId;
   comments: IComment[];
+  isDeleted: boolean;
 }
 
 const commentSchema = new mongoose.Schema(
@@ -81,6 +82,10 @@ const perfumeSchema = new mongoose.Schema(
       required: true,
     },
     comments: [commentSchema],
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true },
 );

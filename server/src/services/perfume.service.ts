@@ -26,7 +26,7 @@ const getAll = async (query: any) => {
   const { search, brand, page = 1, limit = 8 } = query;
 
   //Start filter
-  const filter: any = {};
+  const filter: any = { isDeleted: { $ne: true } };
   if (brand) {
     filter.brand = brand;
   }
@@ -108,7 +108,11 @@ const update = async (id: string, data: any) => {
 };
 
 const remove = async (id: string) => {
-  const record = await Perfume.findByIdAndDelete(id);
+  const record = await Perfume.findByIdAndUpdate(
+    id,
+    { isDeleted: true },
+    { new: true },
+  );
 
   if (!record) {
     throw {

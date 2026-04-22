@@ -25,6 +25,8 @@ export const PERFUME_MESSAGES = {
   UPDATED: "Perfume updated successfully",
   DELETED: "Perfume deleted successfully",
   EXIST_COMMENT: "You have already commented on this perfume",
+  DELETED_NO_COMMENT: "This perfume has been removed and no longer accepts reviews",
+  ADMIN_NO_COMMENT: "Administrators cannot leave reviews",
 } as const;
 
 export const BRAND_MESSAGES = {

@@ -76,6 +76,7 @@ const PerfumeDetail = () => {
   const [perfume, setPerfume] = useState<any>(null);
   const [rating, setRating] = useState(3);
   const [content, setContent] = useState("");
+  const [contentError, setContentError] = useState("");
 
   const fetchPerfume = async () => {
     try {
@@ -93,7 +94,8 @@ const PerfumeDetail = () => {
 
   const handleSubmitComment = async (e: FormEvent) => {
     e.preventDefault();
-    if (!content.trim()) { toast.error("Review content cannot be empty"); return; }
+    if (!content.trim()) { setContentError("Review content cannot be empty"); return; }
+    setContentError("");
     try {
       await addComment(id as string, { rating, content });
       toast.success("Review submitted");
@@ -106,6 +108,9 @@ const PerfumeDetail = () => {
   };
 
   if (!perfume) return <DetailSkeleton />;
+
+  const isDeleted: boolean = perfume.isDeleted === true;
+  const isAdmin: boolean = user?.isAdmin === true;
 
   const hasCommented = perfume.comments?.some(
     (c: any) => c.author?._id === user?._id,
@@ -182,8 +187,8 @@ const PerfumeDetail = () => {
               {perfume.perfumeName}
             </h1>
 
-            {/* Tags row */}
-            <div className="flex flex-wrap gap-2">
+            {/* Tags row + inline rating */}
+            <div className="flex flex-wrap items-center gap-2">
               <span className={concBadgeClass(perfume.concentration)}>
                 {perfume.concentration}
               </span>
@@ -191,22 +196,16 @@ const PerfumeDetail = () => {
                 {perfume.targetAudience}
               </span>
               <span className="badge badge-edc">{perfume.volume}ml</span>
+              {avgRating !== null && (
+                <span className="flex items-center gap-1 pl-1">
+                  <span className="stars-filled text-sm">{"★".repeat(avgRating)}</span>
+                  <span className="stars-empty text-sm">{"★".repeat(3 - avgRating)}</span>
+                  <span className="text-xs font-semibold text-[var(--muted)]">
+                    ({totalReviews})
+                  </span>
+                </span>
+              )}
             </div>
-
-            {/* Rating summary */}
-            {avgRating !== null && (
-              <div className="flex items-center gap-2">
-                <span className="stars-filled text-lg">
-                  {"★".repeat(avgRating)}
-                </span>
-                <span className="stars-empty text-lg">
-                  {"★".repeat(3 - avgRating)}
-                </span>
-                <span className="text-sm font-semibold text-[var(--muted)]">
-                  {totalReviews} review{totalReviews !== 1 ? "s" : ""}
-                </span>
-              </div>
-            )}
 
             {/* Description */}
             {perfume.description && (
@@ -269,8 +268,24 @@ const PerfumeDetail = () => {
 
         <hr className="divider" />
 
-        {/* Write review form */}
-        {user && !hasCommented && (
+        {/* Deleted product banner */}
+        {isDeleted && (
+          <div className="flex items-center gap-3 rounded-2xl border border-(--danger) bg-[rgba(220,38,38,0.06)] p-4 text-sm font-medium text-(--danger)">
+            <span className="text-base">✕</span>
+            This fragrance has been removed and is no longer available.
+          </div>
+        )}
+
+        {/* Admin notice */}
+        {user && isAdmin && !isDeleted && (
+          <div className="panel-soft flex items-center gap-3 rounded-2xl p-4 text-sm text-(--muted)">
+            <span className="text-base">ℹ</span>
+            Administrators cannot leave reviews.
+          </div>
+        )}
+
+        {/* Write review form — only for non-admin, logged-in users on non-deleted perfumes */}
+        {user && !isAdmin && !isDeleted && !hasCommented && (
           <div className="panel space-y-5 p-6 sm:p-7">
             <h3 className="font-display text-xl">Write a review</h3>
             <form className="space-y-5" onSubmit={handleSubmitComment}>
@@ -307,11 +322,12 @@ const PerfumeDetail = () => {
                 </label>
                 <textarea
                   rows={4}
-                  className="field"
+                  className={`field ${contentError ? "border-(--danger)" : ""}`}
                   placeholder="Share your experience with this fragrance…"
                   value={content}
-                  onChange={(e) => setContent(e.target.value)}
+                  onChange={(e) => { setContent(e.target.value); if (contentError) setContentError(""); }}
                 />
+                {contentError && <p className="mt-1 text-xs font-semibold text-(--danger)">{contentError}</p>}
               </div>
 
               <Button type="submit" size="lg" className="px-7 uppercase tracking-wide">
@@ -322,15 +338,15 @@ const PerfumeDetail = () => {
         )}
 
         {/* Already reviewed notice */}
-        {user && hasCommented && (
+        {user && !isAdmin && !isDeleted && hasCommented && (
           <div className="panel-soft flex items-center gap-3 rounded-2xl p-4 text-sm text-[var(--muted)]">
             <span className="text-base text-[var(--accent)]">✓</span>
             You've already reviewed this fragrance.
           </div>
         )}
 
-        {/* Sign-in prompt */}
-        {!user && (
+        {/* Sign-in prompt — hide if product is deleted */}
+        {!user && !isDeleted && (
           <div className="panel-soft flex flex-wrap items-center justify-between gap-4 rounded-2xl p-5">
             <p className="text-sm text-[var(--muted)]">
               Have thoughts on this fragrance? Sign in to leave a review.

@@ -9,6 +9,7 @@ const addComment = async (req: Request, res: Response) => {
       req.params.id as string,
       req.user._id,
       req.body,
+      req.user.isAdmin,
     );
     res.status(result.status).json({ message: result.message });
   } catch (error: any) {

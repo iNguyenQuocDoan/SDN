@@ -6,13 +6,28 @@ const addComment = async (
   perfumeId: string,
   userId: string,
   data: { rating: number; content: string },
+  isAdmin: boolean,
 ) => {
+  if (isAdmin) {
+    throw {
+      status: HTTP_STATUS.FORBIDDEN,
+      message: PERFUME_MESSAGES.ADMIN_NO_COMMENT,
+    };
+  }
+
   const perfume = await Perfume.findById(perfumeId);
 
   if (!perfume) {
     throw {
       status: HTTP_STATUS.NOT_FOUND,
       message: PERFUME_MESSAGES.NOT_FOUND,
+    };
+  }
+
+  if (perfume.isDeleted) {
+    throw {
+      status: HTTP_STATUS.BAD_REQUEST,
+      message: PERFUME_MESSAGES.DELETED_NO_COMMENT,
     };
   }
 
